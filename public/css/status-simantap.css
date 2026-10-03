@@ -1,0 +1,10 @@
+.simantap-status-masuk,
+.simantap-tugas-ditugaskan { background-color: #EFF6FF !important; color: #1D4ED8 !important; }
+.simantap-status-diperiksa { background-color: #FFFBEB !important; color: #B45309 !important; }
+.simantap-status-disetujui { background-color: #F0FDFA !important; color: #0F766E !important; }
+.simantap-status-ditangani,
+.simantap-tugas-berjalan { background-color: #FAF5FF !important; color: #7E22CE !important; }
+.simantap-status-selesai,
+.simantap-tugas-selesai { background-color: #F0FDF4 !important; color: #15803D !important; }
+.simantap-tugas-terkendala { background-color: #FEF2F2 !important; color: #B91C1C !important; }
+.simantap-tugas-dibatalkan { background-color: #F3F4F6 !important; color: #4B5563 !important; }

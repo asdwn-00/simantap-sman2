@@ -1,0 +1,6 @@
+<a href="{{ route('transparansi.index') }}" class="{{ request()->routeIs('transparansi.*') ? 'text-[#2B4885] border-b-2 border-[#F5C518] pb-1' : 'hover:text-[#2B4885] transition-colors' }}">Transparansi</a>
+<a href="{{ route('dashboard') }}" class="{{ request()->routeIs('dashboard') ? 'text-[#2B4885] border-b-2 border-[#F5C518] pb-1' : 'hover:text-[#2B4885] transition-colors' }}">Dashboard</a>
+<a href="{{ route('laporan.index') }}" class="{{ request()->routeIs('laporan.*') ? 'text-[#2B4885] border-b-2 border-[#F5C518] pb-1' : 'hover:text-[#2B4885] transition-colors' }}">Pengajuan Laporan</a>
+<a href="{{ route('penugasan.index') }}" class="{{ request()->routeIs('penugasan.*') ? 'text-[#2B4885] border-b-2 border-[#F5C518] pb-1' : 'hover:text-[#2B4885] transition-colors' }}">Penugasan</a>
+<a href="{{ route('inventaris.index') }}" class="{{ request()->routeIs('inventaris.*') ? 'text-[#2B4885] border-b-2 border-[#F5C518] pb-1' : 'hover:text-[#2B4885] transition-colors' }}">Inventaris Barang</a>
+<a href="{{ route('dana.index') }}" class="{{ request()->routeIs('dana.*') ? 'text-[#2B4885] border-b-2 border-[#F5C518] pb-1' : 'hover:text-[#2B4885] transition-colors' }}">Pengajuan Dana</a>
