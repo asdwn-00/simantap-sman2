@@ -143,7 +143,10 @@
                     <div class="bg-gray-50 rounded-xl p-4 mb-5 space-y-2 border border-gray-100 text-sm">
                         <p><span class="text-gray-400">Petugas:</span> <span class="font-semibold">{{ $pem->petugas->nama ?? '-' }}</span></p>
                         <p><span class="text-gray-400">Temuan:</span> {{ $pem->temuan ?? '-' }}</p>
-                        <p><span class="text-gray-400">Rekomendasi Petugas:</span> <span class="font-semibold">{{ ucfirst($pem->rekomendasi ?? '-') }}</span>
+                        @if ($pem->rekomendasi === 'penggantian')
+                            <p><span class="text-gray-400">Alasan penggantian:</span> {{ $pem->alasan_penggantian ?: 'Belum diisi. Minta revisi sebelum menyetujui.' }}</p>
+                        @endif
+                        <p><span class="text-gray-400">Rekomendasi Petugas:</span> <span class="font-semibold">{{ $pem->label_rekomendasi }}</span>
                             @if ($pem->sumber_pengganti) &middot; {{ $pem->sumber_pengganti === 'stok_gudang' ? 'Ambil Stok Gudang' : 'Pengadaan Baru' }} @endif
                         </p>
                     </div>
@@ -160,13 +163,13 @@
                                     <input type="radio" name="keputusan" value="revisi" onchange="toggleCatatanWajib({{ $lap->laporan_id }}, true)" class="accent-yellow-500"> Minta Revisi
                                 </label>
                                 <label class="flex items-center justify-center gap-1.5 border border-gray-200 rounded-xl px-2 py-2.5 text-xs font-bold cursor-pointer has-[:checked]:border-red-500 has-[:checked]:bg-red-50 has-[:checked]:text-red-600">
-                                    <input type="radio" name="keputusan" value="tolak" onchange="toggleCatatanWajib({{ $lap->laporan_id }}, true)" class="accent-red-500"> Tolak
+                                    <input type="radio" name="keputusan" value="hentikan" onchange="toggleCatatanWajib({{ $lap->laporan_id }}, true)" class="accent-red-500"> Hentikan Laporan
                                 </label>
                             </div>
                         </div>
                         <div>
                             <label class="text-xs font-bold text-gray-500 uppercase tracking-wide">Catatan Koordinator <span id="catatanWajibTag-{{ $lap->laporan_id }}" class="hidden text-red-500 normal-case">(wajib diisi)</span></label>
-                            <textarea name="catatan_koordinator" rows="3" placeholder="Wajib diisi jika Minta Revisi atau Tolak..." class="mt-1.5 w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#2B4885]"></textarea>
+                            <textarea name="catatan_koordinator" rows="3" placeholder="Wajib diisi jika Jelaskan perbaikan rekomendasi atau alasan penghentian laporan..." class="mt-1.5 w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#2B4885]"></textarea>
                         </div>
                         <div>
                             <label class="text-xs font-bold text-gray-500 uppercase tracking-wide">Prioritas Laporan</label>
@@ -176,14 +179,14 @@
                                     <option value="rendah">Rendah</option>
                                     <option value="tinggi">Tinggi</option>
                                 </select>
-                                <p class="text-xs text-gray-500 mt-2">Prioritas ditetapkan sekali ketika rekomendasi disetujui. Revisi atau penolakan tidak menetapkan prioritas.</p>
+                                <p class="text-xs text-gray-500 mt-2">Prioritas ditetapkan sekali ketika rekomendasi disetujui. Revisi atau penghentian tidak menetapkan prioritas.</p>
                             @else
                                 <p class="mt-2 text-sm font-bold text-[#2B4885]">{{ ucfirst($lap->prioritas) }}</p>
                                 <p class="text-xs text-gray-500 mt-1">Prioritas sudah ditetapkan dan tetap berlaku pada pemeriksaan ulang.</p>
                             @endif
                         </div>
                         <div class="bg-blue-50 text-[#2B4885] text-[11px] p-3 rounded-xl border border-blue-100">
-                            Jika disetujui, status laporan menjadi Disetujui. Penugasan pelaksana dapat dilakukan setelah syarat prioritas dan dana terpenuhi. Jika diminta revisi atau ditolak, koordinator perlu menugaskan pemeriksaan ulang.
+                            Jika disetujui, status laporan menjadi Disetujui. Penugasan pelaksana dapat dilakukan setelah syarat prioritas dan dana terpenuhi. Revisi dikembalikan kepada petugas pemeriksa yang sama. Hentikan Laporan mengakhiri proses tanpa penanganan dan wajib disertai alasan.
                         </div>
                         <div class="flex justify-end gap-3 pt-2">
                             <button type="button" onclick="closeModal('modalTinjau-{{ $lap->laporan_id }}')" class="text-gray-500 hover:text-gray-700 text-sm font-bold py-2.5 px-4 rounded-xl">Batal</button>
@@ -248,6 +251,8 @@
 
         <div id="modalDetail-{{ $lap->laporan_id }}" class="hidden fixed inset-0 z-50 flex items-center justify-center px-4 py-6 modal-backdrop overflow-y-auto">
             <div class="bg-white w-full max-w-2xl rounded-[1.75rem] shadow-xl p-8 my-auto relative">
+                @include('partials.penghentian-laporan', ['laporan' => $lap])
+
                 <div class="flex justify-between items-start mb-6 border-b border-gray-100 pb-4">
                     <div>
                         <h3 class="text-xl font-extrabold text-[#2B4885]">Detail Riwayat Laporan ({{ $lap->kode_laporan }})</h3>
@@ -278,15 +283,21 @@
                                 <div>
                                     <p class="text-[10px] font-bold text-gray-500 uppercase">Temuan Petugas</p>
                                     <p class="text-sm text-gray-700 mt-0.5">{{ $pem->temuan ?? '-' }} @if($pem->tanggal_pemeriksaan) (Diperiksa: {{ $pem->tanggal_pemeriksaan->format('d M Y') }}) @endif</p>
+                                    @if ($pem->alasan_penggantian)
+                                        <p class="text-sm mt-2">Alasan penggantian: {{ $pem->alasan_penggantian }}</p>
+                                    @endif
+                                @if ($pem->alasan_penggantian)
+                                    <p class="text-sm mt-2">Alasan penggantian: {{ $pem->alasan_penggantian }}</p>
+                                @endif
                                 </div>
                                 <div class="grid grid-cols-2 gap-4">
                                     <div>
                                         <p class="text-[10px] font-bold text-gray-500 uppercase">Rekomendasi</p>
-                                        <p class="text-sm font-semibold text-gray-800 mt-0.5">{{ $pem->rekomendasi ? ucfirst($pem->rekomendasi) : '-' }}</p>
+                                        <p class="text-sm font-semibold text-gray-800 mt-0.5">{{ $pem->label_rekomendasi }}</p>
                                     </div>
                                     <div>
                                         <p class="text-[10px] font-bold text-gray-500 uppercase">Keputusan Anda</p>
-                                        <p class="text-sm font-bold mt-0.5 {{ $pem->status_persetujuan === 'disetujui' ? 'text-green-600' : ($pem->status_persetujuan === 'ditolak' ? 'text-red-600' : 'text-gray-500') }}">
+                                        <p class="text-sm font-bold mt-0.5 {{ $pem->status_persetujuan === 'disetujui' ? 'text-green-600' : ($pem->status_persetujuan === 'dihentikan' ? 'text-red-600' : 'text-gray-500') }}">
                                             {{ ucfirst(str_replace('_',' ', $pem->status_persetujuan)) }} @if($lap->prioritas) &middot; Prioritas: {{ ucfirst($lap->prioritas) }} @endif
                                         </p>
                                     </div>
@@ -358,7 +369,7 @@
             const keputusan = form.querySelector('input[name="keputusan"]:checked').value;
             const catatan = form.querySelector('textarea[name="catatan_koordinator"]').value.trim();
             if (keputusan !== 'setuju' && catatan === '') {
-                alert('Catatan koordinator wajib diisi untuk revisi/tolak.');
+                alert('Catatan koordinator wajib diisi untuk revisi atau penghentian.');
                 return false;
             }
             return true;

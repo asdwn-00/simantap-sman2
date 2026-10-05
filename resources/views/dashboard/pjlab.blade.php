@@ -172,6 +172,7 @@
 
             </div>
         </div>
+    @include('dashboard.laporan-dihentikan')
     </main>
 </body>
 </html>

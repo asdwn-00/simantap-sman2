@@ -21,7 +21,7 @@ class LaporanKerusakan extends Model
     protected $fillable = [
         'pelapor_id', 'inventaris_id', 'ruangan_id', 'tanggal_laporan',
         'kerusakan', 'prioritas', 'status_laporan',
-        'tanggal_ditutup',
+        'tanggal_ditutup', 'alasan_penghentian',
     ];
 
     public function getKerusakanAttribute($nilai): string
@@ -141,7 +141,7 @@ class LaporanKerusakan extends Model
             ->orderByRaw("CASE laporan_kerusakan.status_laporan
                 WHEN 'masuk' THEN 0 WHEN 'diperiksa' THEN 1
                 WHEN 'disetujui' THEN 2 WHEN 'ditangani' THEN 3
-                WHEN 'selesai' THEN 4 ELSE 5 END")
+                WHEN 'selesai' THEN 4 WHEN 'dihentikan' THEN 5 ELSE 6 END")
             ->orderByRaw("CASE
                 WHEN laporan_kerusakan.status_laporan = 'diperiksa' AND ($siapDitinjau) THEN 0
                 WHEN laporan_kerusakan.status_laporan = 'ditangani' AND ($siapDitutup) THEN 0
@@ -173,7 +173,7 @@ class LaporanKerusakan extends Model
         return $query;
     }
 
-    public function getPersentaseAttribute(): int
+    public function getPersentaseAttribute(): ?int
     {
         return config('simantap.status')[$this->status_laporan];
     }

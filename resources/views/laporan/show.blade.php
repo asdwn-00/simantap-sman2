@@ -107,7 +107,7 @@
             $aksi = null;
             if ($pAktif && \App\Services\AlurLaporan::bolehIsi($laporan, $pAktif, $akun)) {
                 $modal = 'modalPemeriksaan'; $aksi = 'Isi Pemeriksaan';
-            } elseif ($akun->isKoordinator() && $laporan->status_laporan === 'diperiksa' && $pAktif?->status_persetujuan === 'menunggu' && $pAktif?->status_pemeriksaan === 'selesai') {
+            } elseif ($akun->isKoordinator() && $pAktif && \App\Services\AlurLaporan::bolehTinjau($laporan, $pAktif)) {
                 $modal = 'modalTinjau'; $aksi = 'Tinjau Rekomendasi';
             } elseif (\App\Services\AlurLaporan::bolehKonfirmasi($laporan, $akun)) {
                 $modal = 'modalKonfirmasi'; $aksi = 'Konfirmasi Hasil';
@@ -124,7 +124,14 @@
             @forelse ($laporan->pemeriksaan as $p)
                 <div class="row"><span class="label">Petugas</span><span>{{ $p->petugas->nama ?? '-' }}</span></div>
                 <div class="row"><span class="label">Temuan</span><span>{{ $p->temuan ?? '-' }}</span></div>
-                <div class="row"><span class="label">Rekomendasi</span><span>{{ $p->rekomendasi ?? '-' }}</span></div>
+                <div class="row"><span class="label">Rekomendasi</span><span>{{ $p->label_rekomendasi }}</span></div>
+                @if ($p->alasan_penggantian)
+                    <div class="row"><span class="label">Alasan penggantian</span><span>{{ $p->alasan_penggantian }}</span></div>
+                @endif
+                <div class="row"><span class="label">Keputusan rekomendasi</span><span>{{ ucfirst(str_replace('_', ' ', $p->status_persetujuan)) }}</span></div>
+                @if ($p->catatan_koordinator)
+                    <div class="row"><span class="label">Catatan koordinator</span><span>{{ $p->catatan_koordinator }}</span></div>
+                @endif
                 <div class="row"><span class="label">Status</span><span class="{{ config('simantap.warna_tugas.' . $p->status_pemeriksaan) }}">{{ ucfirst($p->status_pemeriksaan) }}</span></div>
             @empty
                 <p class="empty-note">Belum ada pemeriksaan. Koordinator perlu menugaskan petugas dari halaman Penugasan.</p>
@@ -216,7 +223,12 @@
 
         <div class="section">
             <h3>Penutupan</h3>
-            @if ($laporan->status_laporan === 'selesai')
+            @if ($laporan->status_laporan === 'dihentikan')
+                <p><strong>Laporan dihentikan oleh koordinator.</strong></p>
+                <p>{{ $laporan->alasan_penghentian }}</p>
+                <p>Tanggal penghentian: {{ $laporan->tanggal_ditutup?->format('d M Y H:i') }}</p>
+                <p class="empty-note">Proses berakhir tanpa konfirmasi keberhasilan penanganan.</p>
+            @elseif ($laporan->status_laporan === 'selesai')
                 <p>Laporan ini sudah ditutup oleh koordinator.</p>
             @else
                 <p class="empty-note">Laporan belum ditutup.</p>

@@ -37,15 +37,16 @@ INSERT INTO laporan_kerusakan (laporan_id, pelapor_id, inventaris_id, ruangan_id
 (7, 4, 7, 4, '2026-09-10 08:00:00', 'Motor kipas kelas X-6 tidak berfungsi.', NULL, 'selesai', '2026-09-12 13:00:00'),
 (8, 1, 9, 1, '2026-09-11 08:00:00', 'Putaran pengaduk magnetik tidak stabil.', NULL, 'diperiksa', NULL);
 
-INSERT INTO pemeriksaan (pemeriksaan_id, laporan_id, petugas_id, tanggal_penugasan, tanggal_pemeriksaan, status_pemeriksaan, temuan, rekomendasi, sumber_pengganti, status_persetujuan, catatan_koordinator) VALUES
-(1, 2, 4, '2026-09-18 09:00:00', NULL, 'berjalan', NULL, NULL, NULL, 'belum_diajukan', NULL),
-(2, 3, 5, '2026-09-15 09:00:00', '2026-09-15 10:00:00', 'selesai', 'Pengatur fokus perlu servis.', 'perbaikan', NULL, 'disetujui', 'Rencana servis diterima; ajukan rincian biaya.'),
-(3, 4, 4, '2026-09-14 09:00:00', '2026-09-14 10:00:00', 'selesai', 'Kerusakan berat; tidak ada unit pengganti di gudang.', 'penggantian', 'pengadaan', 'disetujui', 'Penggantian diterima. Pelaksanaan menunggu petugas tersedia.'),
-(4, 5, 5, '2026-09-16 09:00:00', '2026-09-16 10:00:00', 'selesai', 'Baut rangka longgar, dapat dikencangkan.', 'perbaikan', NULL, 'disetujui', 'Gunakan peralatan yang tersedia; tanpa pengajuan dana.'),
-(5, 6, 4, '2026-09-13 09:00:00', '2026-09-13 10:00:00', 'selesai', 'Dudukan stopkontak longgar.', 'perbaikan', NULL, 'disetujui', 'Perbaiki dudukan dengan material yang tersedia.'),
-(6, 7, 5, '2026-09-10 09:00:00', '2026-09-10 10:00:00', 'selesai', 'Motor kipas rusak berat; unit cadangan tersedia.', 'penggantian', 'stok_gudang', 'disetujui', 'Gunakan unit dengan ID 8 dari gudang.'),
-(7, 8, 4, '2026-09-11 09:00:00', '2026-09-11 10:00:00', 'selesai', 'Dugaan sambungan pengatur putaran longgar.', 'perbaikan', NULL, 'disetujui', 'Periksa dan kencangkan sambungan; tanpa pengajuan dana.'),
-(8, 8, 5, '2026-09-14 09:00:00', NULL, 'ditugaskan', NULL, NULL, NULL, 'belum_diajukan', 'Pemeriksaan ulang karena pelapor menyatakan putaran masih bermasalah.');
+INSERT INTO pemeriksaan (pemeriksaan_id, laporan_id, petugas_id, tanggal_penugasan, tanggal_pemeriksaan, status_pemeriksaan, temuan, rekomendasi, sumber_pengganti, status_persetujuan, catatan_koordinator, alasan_penggantian, jenis_penggantian) VALUES
+(1, 2, 4, '2026-09-18 09:00:00', NULL, 'berjalan', NULL, NULL, NULL, 'belum_diajukan', NULL, NULL, NULL),
+(2, 3, 5, '2026-09-15 09:00:00', '2026-09-15 10:00:00', 'selesai', 'Pengatur fokus perlu servis.', 'perbaikan', NULL, 'disetujui', 'Rencana servis diterima; ajukan rincian biaya.', NULL, NULL),
+(3, 4, 4, '2026-09-14 09:00:00', '2026-09-14 10:00:00', 'selesai', 'Kerusakan berat; tidak ada unit pengganti di gudang.', 'penggantian', 'pengadaan', 'disetujui', 'Penggantian diterima. Pelaksanaan menunggu petugas tersedia.', 'Komponen utama rusak berat dan tidak dapat diperbaiki; stok pengganti di gudang tidak tersedia.', 'unit'),
+(4, 5, 5, '2026-09-16 09:00:00', '2026-09-16 10:00:00', 'selesai', 'Baut rangka longgar, dapat dikencangkan.', 'perbaikan', NULL, 'disetujui', 'Gunakan peralatan yang tersedia; tanpa pengajuan dana.', NULL, NULL),
+(5, 6, 4, '2026-09-13 09:00:00', '2026-09-13 10:00:00', 'selesai', 'Dudukan stopkontak longgar.', 'perbaikan', NULL, 'disetujui', 'Perbaiki dudukan dengan material yang tersedia.', NULL, NULL),
+(6, 7, 5, '2026-09-10 09:00:00', '2026-09-10 10:00:00', 'selesai', 'Motor kipas rusak berat; unit cadangan tersedia.', 'penggantian', 'stok_gudang', 'disetujui', 'Gunakan unit dengan ID 8 dari gudang.', 'Motor kipas rusak berat dan tidak dapat dipulihkan; unit cadangan layak tersedia di gudang.', 'unit'),
+(7, 8, 4, '2026-09-11 09:00:00', '2026-09-11 10:00:00', 'selesai', 'Dugaan sambungan pengatur putaran longgar.', 'perbaikan', NULL, 'disetujui', 'Periksa dan kencangkan sambungan; tanpa pengajuan dana.', NULL, NULL),
+(8, 8, 5, '2026-09-14 09:00:00', NULL, 'ditugaskan', NULL, NULL, NULL, 'belum_diajukan', 'Pemeriksaan ulang karena pelapor menyatakan putaran masih bermasalah.', NULL, NULL);
+
 
 INSERT INTO pengajuan_dana (pengajuan_id, pemeriksaan_id, pengajuan_sebelumnya_id, pembuat_id, koordinator_id, tanggal_dibuat, rincian_kebutuhan, estimasi_biaya, status_pengajuan, catatan) VALUES
 (1, 2, NULL, 5, 6, '2026-09-15 13:00:00', 'Servis pengatur fokus mikroskop dan biaya transportasi.', 450000.00, 'revisi', 'Pisahkan rincian servis dan transportasi; sesuaikan estimasi.'),
@@ -61,4 +62,3 @@ INSERT INTO penindaklanjutan (penugasan_id, pemeriksaan_id, pengajuan_id, petuga
 INSERT INTO konfirmasi_hasil (konfirmasi_id, penugasan_id, pelapor_id, tanggal_konfirmasi, hasil_konfirmasi, catatan) VALUES
 (1, 3, 4, '2026-09-12 11:00:00', 'sesuai', 'Kipas kelas X-6 sudah dapat digunakan.'),
 (2, 4, 1, '2026-09-13 11:00:00', 'masih_bermasalah', 'Setelah digunakan beberapa menit, putaran kembali tidak stabil.');
-

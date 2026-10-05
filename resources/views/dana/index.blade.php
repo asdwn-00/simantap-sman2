@@ -97,7 +97,7 @@
                 <div class="flex space-x-2">
                     <form method="GET"><select name="status" onchange="this.form.submit()" class="bg-gray-50 border border-gray-200 text-xs rounded-lg px-3 py-2 font-medium focus:outline-none focus:ring-2 focus:ring-[#F5C518]">
 <option value="">Semua Status</option>
-@foreach (['diajukan','disetujui','revisi','ditolak'] as $status)
+@foreach (['diajukan','disetujui','revisi'] as $status)
 <option value="{{ $status }}" @selected(request('status') === $status)>{{ ucfirst($status) }}</option>
 @endforeach
 </select></form>
@@ -120,7 +120,7 @@
 @forelse ($dana as $item)
 @php
     $lap = $item->pemeriksaan->laporan;
-    $warna = ['diajukan'=>'bg-yellow-100 text-yellow-700','disetujui'=>'bg-green-100 text-green-700','revisi'=>'bg-blue-100 text-blue-700','ditolak'=>'bg-red-100 text-red-700'];
+    $warna = ['diajukan'=>'bg-yellow-100 text-yellow-700','disetujui'=>'bg-green-100 text-green-700','revisi'=>'bg-blue-100 text-blue-700'];
 @endphp
 <tr class="hover:bg-gray-50 transition-colors">
     <td class="py-4 px-2"><p class="font-bold text-[#2B4885]">DN-{{ str_pad($item->pengajuan_id, 3, '0', STR_PAD_LEFT) }}</p><p class="text-xs text-gray-800 font-medium mt-0.5">{{ $item->rincian_kebutuhan }}</p></td>
@@ -161,6 +161,7 @@
         <button type="button" onclick="document.getElementById('detail-{{ $item->pengajuan_id }}').classList.add('hidden')" class="absolute top-6 right-6 text-gray-400 hover:text-red-500 transition-colors">&times;</button>
         <h3 class="text-xl font-extrabold text-[#2B4885] mb-4">Detail Pengajuan #{{ $item->pengajuan_id }}</h3>
         <p class="text-sm text-gray-600 mb-4">{{ $item->rincian_kebutuhan }}</p>
+        <p class="text-sm text-gray-600 mb-4">Rencana disetujui: {{ $item->pemeriksaan->label_rekomendasi }}</p>
         <p class="text-sm text-gray-600">{{ $item->pemeriksaan->laporan->ruangan->nama_ruangan }}</p>
         <p class="text-sm text-gray-600">{{ $item->tanggal_dibuat->translatedFormat('d M Y') }} | {{ ucfirst($item->status_pengajuan) }}</p>
         @unless ($akun->isPjLab())

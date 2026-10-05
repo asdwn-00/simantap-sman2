@@ -147,7 +147,7 @@
                                     <span style="font-size:12px;color:var(--text-muted);">{{ $item->nama_ruangan }}</span>
                                 </td>
                                 <td>
-                                    {{ ucfirst($item->rekomendasi) }}
+                                    {{ $item->label_rekomendasi }}
                                     @if ($item->sumber_pengganti)
                                         <br><span style="font-size:12px;color:var(--text-muted);">{{ ucfirst(str_replace('_', ' ', $item->sumber_pengganti)) }}</span>
                                     @endif

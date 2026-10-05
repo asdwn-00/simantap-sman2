@@ -31,7 +31,7 @@ class LaporanController extends Controller
             $p = AlurLaporan::pemeriksaan($l);
             $t = AlurLaporan::tindakan($l);
             $warna = config('simantap.warna_laporan');
-            $aksi = AlurLaporan::bolehTutup($l) ? 'tutup' : (($l->status_laporan === 'diperiksa' && $p?->status_persetujuan === 'menunggu' && $p?->status_pemeriksaan === 'selesai') ? 'tinjau' : ((AlurLaporan::bolehPeriksa($l) || AlurLaporan::bolehLaksana($l)) ? 'penugasan' : 'detail'));
+            $aksi = AlurLaporan::bolehTutup($l) ? 'tutup' : (($p && AlurLaporan::bolehTinjau($l, $p)) ? 'tinjau' : ((AlurLaporan::bolehPeriksa($l) || AlurLaporan::bolehLaksana($l)) ? 'penugasan' : 'detail'));
             return ['laporan' => $l, 'pemeriksaan_terakhir' => $p, 'tindakan_terakhir' => $t, 'konfirmasi_terakhir' => $t?->konfirmasi,
                 'label_status' => ucfirst($l->status_laporan), 'warna_status' => $warna[$l->status_laporan],
                 'rekomendasi_text' => e(AlurLaporan::keterangan($l)), 'aksi' => $aksi,
@@ -102,6 +102,7 @@ class LaporanController extends Controller
         if (
             AlurLaporan::bolehCatatProgres($laporan, $akun)
             && $pemeriksaan?->rekomendasi === 'penggantian'
+            && $pemeriksaan->jenis_penggantian === 'unit'
         ) {
             $daftarGudang = Ruangan::where('jenis_ruangan', 'gudang')
                 ->orderBy('nama_ruangan')
@@ -118,7 +119,7 @@ class LaporanController extends Controller
                     $query->where('jenis_ruangan', 'gudang');
                 })
                 ->whereDoesntHave('laporan', function ($query) {
-                    $query->where('status_laporan', '!=', 'selesai');
+                    $query->whereNotIn('status_laporan', ['selesai', 'dihentikan']);
                 })
                 ->orderBy('inventaris_id')
                 ->get();
@@ -169,12 +170,28 @@ class LaporanController extends Controller
     {
         $akun = Auth::guard('pengguna')->user();
         abort_unless($akun->isPetugas() && (int) $pemeriksaan->petugas_id === (int) $akun->pengguna_id, 403);
-        $data = $request->validate(['temuan' => 'required|string|max:1000', 'rekomendasi' => 'required|in:perbaikan,penggantian', 'sumber_pengganti' => 'nullable|required_if:rekomendasi,penggantian|in:stok_gudang,pengadaan']);
+        $data = $request->validate([
+            'temuan' => 'required|string|max:1000',
+            'rekomendasi' => 'required|in:perbaikan,penggantian',
+            'jenis_penggantian' => 'nullable|required_if:rekomendasi,penggantian|in:unit,sparepart',
+            'sumber_pengganti' => 'nullable|required_if:rekomendasi,penggantian|in:stok_gudang,pengadaan',
+            'alasan_penggantian' => 'nullable|required_if:rekomendasi,penggantian|string|max:2000',
+        ]);
+
+        if ($data['rekomendasi'] === 'penggantian'
+            && $data['jenis_penggantian'] === 'sparepart'
+            && $data['sumber_pengganti'] !== 'pengadaan') {
+            throw ValidationException::withMessages([
+                'sumber_pengganti' => 'Penggantian sparepart harus melalui pengadaan dan pengajuan dana.',
+            ]);
+        }
         DB::transaction(function () use ($pemeriksaan, $data, $akun) {
             $laporan = LaporanKerusakan::whereKey($pemeriksaan->laporan_id)->lockForUpdate()->firstOrFail();
             $pemeriksaan = $pemeriksaan->fresh();
             abort_unless(AlurLaporan::bolehIsi($laporan, $pemeriksaan, $akun), 422, 'Pemeriksaan ini bukan tahap aktif.');
             $pemeriksaan->update(['temuan' => $data['temuan'], 'rekomendasi' => $data['rekomendasi'],
+                'jenis_penggantian' => $data['rekomendasi'] === 'penggantian' ? $data['jenis_penggantian'] : null,
+                'alasan_penggantian' => $data['rekomendasi'] === 'penggantian' ? $data['alasan_penggantian'] : null,
                 'sumber_pengganti' => $data['rekomendasi'] === 'penggantian' ? $data['sumber_pengganti'] : null,
                 'status_pemeriksaan' => 'selesai', 'tanggal_pemeriksaan' => now(), 'status_persetujuan' => 'menunggu']);
             $laporan->update(['status_laporan' => 'diperiksa']);
@@ -188,9 +205,9 @@ class LaporanController extends Controller
         abort_unless(Auth::guard('pengguna')->user()->isKoordinator(), 403);
 
         $data = $request->validate([
-            'keputusan' => 'required|in:setuju,revisi,tolak',
+            'keputusan' => 'required|in:setuju,revisi,hentikan',
             'prioritas' => 'nullable|in:tinggi,rendah',
-            'catatan_koordinator' => 'nullable|required_if:keputusan,revisi,tolak|string|max:1000',
+            'catatan_koordinator' => 'nullable|required_if:keputusan,revisi,hentikan|string|max:1000',
         ]);
 
         DB::transaction(function () use ($pemeriksaan, $data) {
@@ -200,13 +217,25 @@ class LaporanController extends Controller
             $p = $pemeriksaan->fresh();
 
             abort_unless(
-                $laporan->status_laporan === 'diperiksa'
-                && AlurLaporan::pemeriksaan($laporan)?->pemeriksaan_id === $p->pemeriksaan_id
-                && $p->status_pemeriksaan === 'selesai'
-                && $p->status_persetujuan === 'menunggu',
+                AlurLaporan::bolehTinjau($laporan, $p),
                 422,
                 'Rencana bukan versi aktif yang menunggu tinjauan.'
             );
+
+            if ($data['keputusan'] === 'setuju' && $p->rekomendasi === 'penggantian'
+                && trim((string) $p->alasan_penggantian) === '') {
+                throw ValidationException::withMessages([
+                    'rekomendasi' => 'Alasan penggantian belum diisi. Minta petugas merevisi rekomendasi terlebih dahulu.',
+                ]);
+            }
+
+            if ($data['keputusan'] === 'setuju' && $p->rekomendasi === 'penggantian'
+                && (! in_array($p->jenis_penggantian, ['unit', 'sparepart'], true)
+                    || ($p->jenis_penggantian === 'sparepart' && $p->sumber_pengganti !== 'pengadaan'))) {
+                throw ValidationException::withMessages([
+                    'rekomendasi' => 'Jenis atau sumber penggantian belum sesuai. Minta petugas merevisi rekomendasi.',
+                ]);
+            }
 
             $prioritasIsian = $data['prioritas'] ?? null;
 
@@ -233,7 +262,7 @@ class LaporanController extends Controller
             $status = [
                 'setuju' => 'disetujui',
                 'revisi' => 'revisi',
-                'tolak' => 'ditolak',
+                'hentikan' => 'dihentikan',
             ][$data['keputusan']];
 
             $p->update([
@@ -242,8 +271,13 @@ class LaporanController extends Controller
             ]);
 
             $perubahanLaporan = [
-                'status_laporan' => $status === 'disetujui' ? 'disetujui' : 'diperiksa',
+                'status_laporan' => $status === 'revisi' ? 'diperiksa' : $status,
             ];
+
+            if ($status === 'dihentikan') {
+                $perubahanLaporan['alasan_penghentian'] = $data['catatan_koordinator'];
+                $perubahanLaporan['tanggal_ditutup'] = now();
+            }
 
             if ($status === 'disetujui' && $laporan->prioritas === null) {
                 $perubahanLaporan['prioritas'] = $prioritasIsian;
@@ -252,7 +286,7 @@ class LaporanController extends Controller
             $laporan->update($perubahanLaporan);
         });
 
-        return back()->with('sukses', 'Keputusan rencana disimpan. Revisi atau penolakan memerlukan penugasan pemeriksaan ulang.');
+        return back()->with('sukses', 'Keputusan rekomendasi berhasil disimpan.');
     }
 
     public function tutup(LaporanKerusakan $laporan)
@@ -262,7 +296,9 @@ class LaporanController extends Controller
             $laporan = LaporanKerusakan::whereKey($laporan->laporan_id)->lockForUpdate()->firstOrFail();
             abort_unless(AlurLaporan::bolehTutup($laporan), 422, 'Hasil terakhir belum sesuai atau masih ada pekerjaan aktif.');
             $t = AlurLaporan::tindakan($laporan);
-            if (AlurLaporan::pemeriksaan($laporan)->rekomendasi === 'perbaikan') {
+            $pemeriksaan = AlurLaporan::pemeriksaan($laporan);
+            if ($pemeriksaan->rekomendasi === 'perbaikan'
+                || ($pemeriksaan->rekomendasi === 'penggantian' && $pemeriksaan->jenis_penggantian === 'sparepart')) {
                 $barang = Inventaris::whereKey(
                     AlurLaporan::inventarisSaatIniId($laporan)
                 )

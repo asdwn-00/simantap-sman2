@@ -120,16 +120,25 @@
                         </div>
                     </div>
 
+                    @if ($l->status_laporan !== 'dihentikan')
                     <div class="flex-shrink-0 flex items-center justify-center w-20 h-20 rounded-full border-4 border-blue-100 relative">
                         <svg class="absolute inset-0 w-full h-full transform -rotate-90" viewBox="0 0 36 36">
                             <path class="text-blue-500" stroke-dasharray="{{ $persenSelesai }}, 100" stroke="currentColor" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                         </svg>
                         <span class="text-xl font-bold text-[#2B4885]">{{ $persenSelesai }}%</span>
                     </div>
+                    @endif
                 </div>
 
                 <hr class="border-gray-100 mb-8">
 
+                @if ($l->status_laporan === 'dihentikan')
+                    <div class="bg-red-50 text-red-800 rounded-xl p-4 mb-10">
+                        <h5 class="font-bold">Laporan Dihentikan</h5>
+                        <p class="mt-2">{{ $l->alasan_penghentian }}</p>
+                        <p class="text-sm mt-2">Tanggal penghentian: {{ \Carbon\Carbon::parse($l->tanggal_ditutup)->translatedFormat('d M Y H:i') }}</p>
+                    </div>
+                @else
                 <div class="mb-10">
                     <h5 class="text-lg font-bold text-[#2B4885] mb-6">Status Pengerjaan</h5>
                     <div class="relative flex justify-between items-center w-full">
@@ -153,6 +162,7 @@
                     </div>
                 </div>
 
+                @endif
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div class="bg-gray-50 rounded-2xl p-6 border border-gray-100">
                         <h5 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Rincian Keluhan</h5>
@@ -171,7 +181,7 @@
                                 <li>
                                     <p class="text-xs text-gray-500 font-medium mb-1">Rekomendasi Tindakan</p>
                                     <p class="text-sm text-gray-800">
-                                        {{ $pemeriksaanTerbaru->rekomendasi === 'penggantian' ? 'Penggantian barang.' : 'Perbaikan barang.' }}
+                                        {{ $pemeriksaanTerbaru->label_rekomendasi }}.
                                         @if ($pemeriksaanTerbaru->sumber_pengganti)
                                             Sumber: {{ $pemeriksaanTerbaru->sumber_pengganti === 'stok_gudang' ? 'stok gudang.' : 'pengadaan baru.' }}
                                         @endif

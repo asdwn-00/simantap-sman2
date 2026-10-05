@@ -40,7 +40,7 @@ class AlurLaporan
         }
         $p = self::pemeriksaan($laporan);
 
-        return ! $p || in_array($p->status_persetujuan, ['revisi', 'ditolak'])
+        return ! $p
             || self::tindakan($laporan)?->konfirmasi?->hasil_konfirmasi === 'masih_bermasalah';
     }
 
@@ -49,7 +49,21 @@ class AlurLaporan
         return $akun->isPetugas() && (int) $p->petugas_id === (int) $akun->pengguna_id
             && $laporan->status_laporan === 'diperiksa'
             && self::pemeriksaan($laporan)?->pemeriksaan_id === $p->pemeriksaan_id
-            && in_array($p->status_pemeriksaan, ['ditugaskan', 'berjalan']);
+            && (in_array($p->status_pemeriksaan, ['ditugaskan', 'berjalan'])
+                || ($p->status_pemeriksaan === 'selesai' && $p->status_persetujuan === 'revisi'))
+            && $p->pengajuanDana->isEmpty()
+            && $p->penindaklanjutan->isEmpty();
+    }
+
+    public static function bolehTinjau(LaporanKerusakan $laporan, Pemeriksaan $p): bool
+    {
+        return $laporan->status_laporan === 'diperiksa'
+            && self::pemeriksaan($laporan)?->pemeriksaan_id === $p->pemeriksaan_id
+            && $p->status_pemeriksaan === 'selesai'
+            && $p->status_persetujuan === 'menunggu'
+            && ! self::adaPekerjaanAktif($laporan)
+            && $p->pengajuanDana->isEmpty()
+            && $p->penindaklanjutan->isEmpty();
     }
 
     public static function bolehBuatDana(Pemeriksaan $p, Pengguna $akun): bool 
@@ -184,6 +198,9 @@ class AlurLaporan
 
     public static function keterangan(LaporanKerusakan $laporan): string
     {
+        if ($laporan->status_laporan === 'dihentikan') {
+            return 'Laporan dihentikan oleh koordinator. '.$laporan->alasan_penghentian;
+        }
         if ($laporan->status_laporan === 'selesai') {
             return 'Laporan sudah ditutup.';
         }
@@ -205,10 +222,7 @@ class AlurLaporan
             return 'Menunggu persetujuan rekomendasi dari koordinator.';
         }
         if ($p->status_persetujuan === 'revisi') {
-            return 'Rekomendasi perlu direvisi. Menunggu penugasan pemeriksaan ulang.';
-        }
-        if ($p->status_persetujuan === 'ditolak') {
-            return 'Rekomendasi ditolak. Menunggu penugasan pemeriksaan ulang.';
+            return 'Menunggu petugas pemeriksa memperbaiki rekomendasi sesuai catatan koordinator.';
         }
         if ($t?->status_tindakan === 'selesai') {
             return $t->konfirmasi ? 'Hasil sudah dikonfirmasi sesuai. Menunggu penutupan laporan.' : 'Pekerjaan selesai. Menunggu konfirmasi pelapor.';
@@ -225,9 +239,6 @@ class AlurLaporan
         $dana = self::danaTerakhir($p);
         if ($dana->contains('status_pengajuan', 'revisi')) {
             return 'Menunggu revisi pengajuan dana.';
-        }
-        if ($dana->contains('status_pengajuan', 'ditolak')) {
-            return 'Dana ditolak. Pelaksanaan belum dapat dimulai.';
         }
         if ($dana->contains('status_pengajuan', 'diajukan')) {
             return 'Menunggu keputusan pengajuan dana.';

@@ -12,7 +12,7 @@ class TransparansiController extends Controller
 
     private const TAHAPAN = ['masuk', 'diperiksa', 'disetujui', 'ditangani', 'selesai'];
 
-    private const BADGE = ['masuk' => ['Masuk', 'slate'], 'diperiksa' => ['Diperiksa', 'amber'], 'disetujui' => ['Disetujui', 'amber'], 'ditangani' => ['Ditangani', 'blue'], 'selesai' => ['Selesai', 'emerald']];
+    private const BADGE = ['masuk' => ['Masuk', 'slate'], 'diperiksa' => ['Diperiksa', 'amber'], 'disetujui' => ['Disetujui', 'amber'], 'ditangani' => ['Ditangani', 'blue'], 'selesai' => ['Selesai', 'emerald'], 'dihentikan' => ['Dihentikan', 'red']];
 
     public function index(\Illuminate\Http\Request $request)
     {
@@ -99,7 +99,11 @@ class TransparansiController extends Controller
         $l->persen = $persen;
 
         $model = LaporanKerusakan::lengkap()->findOrFail($l->laporan_id);
-        $l->judul_ringkasan = $l->status_laporan === 'selesai' ? 'Hasil Penanganan' : 'Kendala / Progress';
+        $l->judul_ringkasan = match ($l->status_laporan) {
+            'selesai' => 'Hasil Penanganan',
+            'dihentikan' => 'Alasan Penghentian',
+            default => 'Kendala / Progress',
+        };
         $t = AlurLaporan::tindakan($model);
         $l->teks_ringkasan = $l->status_laporan === 'selesai'
             ? ($t?->hasil ?: AlurLaporan::keterangan($model))
@@ -110,6 +114,9 @@ class TransparansiController extends Controller
 
     private function hitungProgres(string $status): array
     {
+        if ($status === 'dihentikan') {
+            return [0, null];
+        }
         $persen = config('simantap.status')[$status] ?? 0;
         return [(int) ($persen / 25) + 1, $persen];
     }
@@ -126,7 +133,7 @@ class TransparansiController extends Controller
             if ($p->tanggal_pemeriksaan) {
                 $teks = $p->temuan ?: 'Pemeriksaan selesai dilakukan.';
                 if ($p->rekomendasi) {
-                    $teks .= ' Rekomendasi: ' . ($p->rekomendasi === 'penggantian' ? 'penggantian barang.' : 'perbaikan.');
+                    $teks .= ' Rekomendasi: ' . $p->label_rekomendasi . '.';
                 }
                 $lini[] = ['tanggal' => $p->tanggal_pemeriksaan, 'judul' => 'Pemeriksaan Selesai', 'teks' => $teks];
             } else {
@@ -160,7 +167,9 @@ class TransparansiController extends Controller
             ];
         }
 
-        if ($l->tanggal_ditutup) {
+        if ($l->status_laporan === 'dihentikan') {
+            $lini[] = ['tanggal' => $l->tanggal_ditutup, 'judul' => 'Laporan Dihentikan', 'teks' => $l->alasan_penghentian];
+        } elseif ($l->tanggal_ditutup) {
             $lini[] = ['tanggal' => $l->tanggal_ditutup, 'judul' => 'Laporan Ditutup', 'teks' => 'Laporan dinyatakan selesai oleh koordinator.'];
         }
 

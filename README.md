@@ -98,6 +98,8 @@ php artisan migrate --path=database/migrations/hapus_kode_inventaris.php
 
 Penyesuaian ini menghapus kolom kode dan tabel pencatat kode lama. ID barang, data barang, laporan, dan hubungan antartabel tetap dipertahankan. Nilai kode lama tidak bisa dipulihkan lewat rollback; gunakan cadangan jika diperlukan. Tidak perlu menjalankan seed ulang atau `migrate:fresh`. Untuk instalasi baru dengan langkah di atas, penyesuaian ini sudah ikut dijalankan.
 
+Untuk database versi lama, pembaruan alur rekomendasi dan dana juga memerlukan migrasi `revisi_alur_rekomendasi_dana.php`. Migrasi ini menambahkan alasan penggantian/penghentian dan menyesuaikan status lama tanpa menghapus laporan. Cadangkan database terlebih dahulu; langkah lengkap dan penanganan konflik dijelaskan di [Panduan alur rekomendasi dan dana](PANDUAN-ALUR-REKOMENDASI-DANA.md). Pada instalasi baru, migrasi tersebut sudah ikut dijalankan.
+
 **5. Jalankan aplikasi**
 
 ```powershell

@@ -13,7 +13,6 @@ use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
-    private const TUGAS_AKTIF_PEMERIKSAAN = ['ditugaskan', 'berjalan'];
     private const TUGAS_AKTIF_TINDAKAN = ['ditugaskan', 'berjalan', 'terkendala'];
 
     public function index()
@@ -33,7 +32,7 @@ class DashboardController extends Controller
 
         $laporanLab = LaporanKerusakan::terlihat($pengguna);
 
-        $laporanTerbuka = (clone $laporanLab)->where('status_laporan', '!=', 'selesai')->count();
+        $laporanTerbuka = (clone $laporanLab)->whereNotIn('status_laporan', ['selesai', 'dihentikan'])->count();
         $laporanSelesai = (clone $laporanLab)->where('status_laporan', 'selesai')->count();
         $totalLaporanLab = (clone $laporanLab)->count();
 
@@ -46,7 +45,7 @@ class DashboardController extends Controller
             ->get()->filter(fn ($t) => AlurLaporan::bolehKonfirmasi($t->pemeriksaan->laporan, $pengguna) && AlurLaporan::tindakan($t->pemeriksaan->laporan)?->penugasan_id === $t->penugasan_id);
 
         $daftarLaporan = (clone $laporanLab)
-            ->where('status_laporan', '!=', 'selesai')
+            ->whereNotIn('status_laporan', ['selesai', 'dihentikan'])
             ->with('inventaris', 'ruangan')
             ->latest('tanggal_laporan')
             ->take(5)
@@ -59,19 +58,20 @@ class DashboardController extends Controller
                 'total' => Inventaris::where('ruangan_id', $lab->ruangan_id)->count(),
                 'baik' => Inventaris::where('ruangan_id', $lab->ruangan_id)->where('kondisi', 'baik')->count(),
                 'dalamPerbaikan' => Inventaris::where('ruangan_id', $lab->ruangan_id)
-                    ->whereHas('laporan', fn ($q) => $q->where('status_laporan', '!=', 'selesai'))
+                    ->whereHas('laporan', fn ($q) => $q->whereNotIn('status_laporan', ['selesai', 'dihentikan']))
                     ->count(),
             ];
         });
 
         $barangPerluPerhatian = Inventaris::whereIn('ruangan_id', $ruanganLabIds)
             ->where('kondisi', '!=', 'baik')
-            ->whereDoesntHave('laporan', fn ($q) => $q->where('status_laporan', '!=', 'selesai'))
+            ->whereDoesntHave('laporan', fn ($q) => $q->whereNotIn('status_laporan', ['selesai', 'dihentikan']))
             ->get();
 
         return view('dashboard.pjlab', [
             'pengguna' => $pengguna,
             'sapaan' => $this->sapaanWaktu(),
+            'jumlahDihentikan' => LaporanKerusakan::terlihat($pengguna)->where('status_laporan', 'dihentikan')->count(),
             'laporanTerbuka' => $laporanTerbuka,
             'laporanSelesai' => $laporanSelesai,
             'totalLaporanLab' => $totalLaporanLab,
@@ -90,18 +90,18 @@ class DashboardController extends Controller
         $rekomendasiMenungguTinjauan = Pemeriksaan::where('status_persetujuan', 'menunggu')
             ->with('laporan.inventaris', 'laporan.ruangan')
             ->orderByDesc('tanggal_penugasan')
-            ->get();
+            ->get()->filter(fn ($p) => AlurLaporan::bolehTinjau($p->laporan, $p));
 
         $danaMenunggu = PengajuanDana::where('status_pengajuan', 'diajukan')->whereDoesntHave('pengajuanBerikutnya')
             ->with('pemeriksaan.laporan.inventaris', 'pembuat')
             ->orderByDesc('tanggal_dibuat')
-            ->get();
+            ->get()->filter(fn ($d) => AlurLaporan::bolehPutusDana($d, $pengguna));
 
         $siapDitutup = LaporanKerusakan::lengkap()->get()->filter(fn ($l) => AlurLaporan::bolehTutup($l));
 
         $bebanTugasPetugas = Pengguna::where('role', 'petugas')
             ->withCount([
-                'pemeriksaanDitugaskan as tugas_pemeriksaan_aktif' => fn ($q) => $q->whereIn('status_pemeriksaan', self::TUGAS_AKTIF_PEMERIKSAAN),
+                'pemeriksaanDitugaskan as tugas_pemeriksaan_aktif' => fn ($q) => $q->perluDikerjakan(),
                 'penindaklanjutanDitugaskan as tugas_pelaksanaan_aktif' => fn ($q) => $q->whereIn('status_tindakan', self::TUGAS_AKTIF_TINDAKAN),
             ])
             ->get()
@@ -113,6 +113,7 @@ class DashboardController extends Controller
         return view('dashboard.koordinator', [
             'pengguna' => $pengguna,
             'sapaan' => $this->sapaanWaktu(),
+            'jumlahDihentikan' => LaporanKerusakan::terlihat($pengguna)->where('status_laporan', 'dihentikan')->count(),
             'belumAdaPemeriksa' => $belumAdaPemeriksa,
             'rekomendasiMenungguTinjauan' => $rekomendasiMenungguTinjauan,
             'danaMenunggu' => $danaMenunggu,
@@ -124,15 +125,15 @@ class DashboardController extends Controller
     private function petugas($pengguna)
     {
         $pemeriksaanAktif = Pemeriksaan::where('petugas_id', $pengguna->pengguna_id)
-            ->whereIn('status_pemeriksaan', self::TUGAS_AKTIF_PEMERIKSAAN)
+            ->perluDikerjakan()
             ->with('laporan.inventaris', 'laporan.ruangan')
-            ->get();
+            ->get()->filter(fn ($p) => AlurLaporan::bolehIsi($p->laporan, $p, $pengguna));
 
         $pemeriksaanMenungguReview = Pemeriksaan::where('petugas_id', $pengguna->pengguna_id)
             ->where('status_pemeriksaan', 'selesai')
             ->where('status_persetujuan', 'menunggu')
             ->with('laporan.inventaris', 'laporan.ruangan')
-            ->get();
+            ->get()->filter(fn ($p) => AlurLaporan::bolehTinjau($p->laporan, $p));
 
         $tugasPelaksanaan = Penindaklanjutan::where('petugas_id', $pengguna->pengguna_id)
             ->whereIn('status_tindakan', self::TUGAS_AKTIF_TINDAKAN)
@@ -156,6 +157,7 @@ class DashboardController extends Controller
             ->get()->filter(fn ($t) => AlurLaporan::bolehKonfirmasi($t->pemeriksaan->laporan, $pengguna) && AlurLaporan::tindakan($t->pemeriksaan->laporan)?->penugasan_id === $t->penugasan_id);
 
         $labelPemeriksaan = [
+            'revisi' => ['Perlu Revisi', config('simantap.warna_tugas.revisi'), 'Revisi Pemeriksaan'],
             'ditugaskan' => ['Baru Ditugaskan', config('simantap.warna_tugas.ditugaskan'), 'Isi Pemeriksaan'],
             'berjalan' => ['Sedang Diperiksa', config('simantap.warna_tugas.berjalan'), 'Isi Pemeriksaan'],
         ];
@@ -166,7 +168,7 @@ class DashboardController extends Controller
         ];
 
         $daftarTugas = $pemeriksaanAktif->map(function ($t) use ($labelPemeriksaan) {
-            [$label, $warna, $aksi] = $labelPemeriksaan[$t->status_pemeriksaan] ?? ['Aktif', 'bg-gray-100 text-gray-700', 'Detail Tugas'];
+            [$label, $warna, $aksi] = $labelPemeriksaan[$t->status_persetujuan === 'revisi' ? 'revisi' : $t->status_pemeriksaan] ?? ['Aktif', 'bg-gray-100 text-gray-700', 'Detail Tugas'];
             return (object) [
                 'jenis' => 'Pemeriksaan & Rekomendasi',
                 'lokasi' => $t->laporan->ruangan->nama_ruangan ?? '-',
@@ -200,6 +202,7 @@ class DashboardController extends Controller
         return view('dashboard.petugas', [
             'pengguna' => $pengguna,
             'sapaan' => $this->sapaanWaktu(),
+            'jumlahDihentikan' => LaporanKerusakan::terlihat($pengguna)->where('status_laporan', 'dihentikan')->count(),
             'tugasAktif' => $tugasAktif,
             'danaDiajukan' => $danaDiajukan,
             'danaRevisi' => $danaRevisi,

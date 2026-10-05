@@ -42,8 +42,9 @@ CREATE TABLE laporan_kerusakan (
     tanggal_laporan DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     kerusakan TEXT NOT NULL,
     prioritas ENUM('tinggi','rendah') NULL,
-    status_laporan ENUM('masuk','diperiksa','disetujui','ditangani','selesai') NOT NULL DEFAULT 'masuk',
+    status_laporan ENUM('masuk','diperiksa','disetujui','ditangani','selesai','dihentikan') NOT NULL DEFAULT 'masuk',
     tanggal_ditutup DATETIME NULL,
+    alasan_penghentian TEXT NULL,
     CONSTRAINT fk_laporan_pelapor
         FOREIGN KEY (pelapor_id) REFERENCES pengguna(pengguna_id),
     CONSTRAINT fk_laporan_inventaris
@@ -60,14 +61,17 @@ CREATE TABLE pemeriksaan (
     tanggal_pemeriksaan DATETIME NULL,
     status_pemeriksaan ENUM('ditugaskan','berjalan','selesai','dibatalkan') NOT NULL DEFAULT 'ditugaskan',
     temuan TEXT NULL,
+    alasan_penggantian TEXT NULL,
     rekomendasi ENUM('perbaikan','penggantian') NULL,
+    jenis_penggantian ENUM('unit','sparepart') NULL,
     sumber_pengganti ENUM('stok_gudang','pengadaan') NULL,
-    status_persetujuan ENUM('belum_diajukan','menunggu','disetujui','ditolak','revisi') NOT NULL DEFAULT 'belum_diajukan',
+    status_persetujuan ENUM('belum_diajukan','menunggu','disetujui','revisi','dihentikan') NOT NULL DEFAULT 'belum_diajukan',
     catatan_koordinator TEXT NULL,
     CONSTRAINT fk_pemeriksaan_laporan
         FOREIGN KEY (laporan_id) REFERENCES laporan_kerusakan(laporan_id),
     CONSTRAINT fk_pemeriksaan_petugas
         FOREIGN KEY (petugas_id) REFERENCES pengguna(pengguna_id),
+    CONSTRAINT ck_pemeriksaan_jenis CHECK (((rekomendasi IS NULL AND jenis_penggantian IS NULL) OR (rekomendasi = 'perbaikan' AND jenis_penggantian IS NULL) OR (rekomendasi = 'penggantian' AND (jenis_penggantian = 'unit' OR (jenis_penggantian = 'sparepart' AND sumber_pengganti = 'pengadaan')))) IS TRUE),
     CONSTRAINT ck_pemeriksaan_sumber CHECK (((rekomendasi IS NULL AND sumber_pengganti IS NULL) OR (rekomendasi = 'perbaikan' AND sumber_pengganti IS NULL) OR (rekomendasi = 'penggantian' AND sumber_pengganti IS NOT NULL)) IS TRUE)
 ) ENGINE=InnoDB;
 
@@ -80,7 +84,7 @@ CREATE TABLE pengajuan_dana (
     tanggal_dibuat DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     rincian_kebutuhan TEXT NOT NULL,
     estimasi_biaya DECIMAL(14,2) NOT NULL,
-    status_pengajuan ENUM('diajukan','revisi','ditolak','disetujui') NOT NULL DEFAULT 'diajukan',
+    status_pengajuan ENUM('diajukan','revisi','disetujui') NOT NULL DEFAULT 'diajukan',
     catatan TEXT NULL,
     CONSTRAINT fk_pengajuan_pemeriksaan
         FOREIGN KEY (pemeriksaan_id) REFERENCES pemeriksaan(pemeriksaan_id),

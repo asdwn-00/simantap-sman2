@@ -83,7 +83,7 @@
                                 {{ $pemeriksaan->laporan->kode_laporan }}
                                 | {{ $pemeriksaan->laporan->inventaris->nama_barang }}
                                 | {{ $pemeriksaan->laporan->ruangan->nama_ruangan }}
-                                | {{ ucfirst($pemeriksaan->rekomendasi) }}
+                                | {{ $pemeriksaan->label_rekomendasi }}
                             </option>
                         @endforeach
                     </select>

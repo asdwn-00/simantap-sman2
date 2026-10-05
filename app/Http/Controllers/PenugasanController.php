@@ -26,7 +26,7 @@ class PenugasanController extends Controller
             $daftar = $daftar->filter(fn ($l) => (int) $l->ruangan->pj_id === (int) $akun->pengguna_id);
         }
         $petugas = Pengguna::where('role', 'petugas')->withCount([
-            'pemeriksaanDitugaskan as periksa_aktif' => fn ($q) => $q->whereIn('status_pemeriksaan', ['ditugaskan', 'berjalan']),
+            'pemeriksaanDitugaskan as periksa_aktif' => fn ($q) => $q->perluDikerjakan(),
             'penindaklanjutanDitugaskan as laksana_aktif' => fn ($q) => $q->whereIn('status_tindakan', ['ditugaskan', 'berjalan', 'terkendala']),
         ])->get();
         foreach ($petugas as $p) {
@@ -43,7 +43,7 @@ class PenugasanController extends Controller
                     if ($akun->isKoordinator() && $request->filled('petugas') && (int) $t->petugas_id !== (int) $request->query('petugas')) {
                         continue;
                     }
-                    $tugas->push(['jenis' => $jenis, 'laporan' => $l, 'petugas' => $t->petugas, 'status' => $jenis === 'Pemeriksaan' ? $t->status_pemeriksaan : $t->status_tindakan]);
+                    $tugas->push(['jenis' => $jenis, 'laporan' => $l, 'petugas' => $t->petugas, 'status' => $jenis === 'Pemeriksaan' ? (in_array($t->status_persetujuan, ['revisi', 'dihentikan']) ? $t->status_persetujuan : $t->status_pemeriksaan) : $t->status_tindakan]);
                 }
             }
         }
@@ -61,6 +61,7 @@ class PenugasanController extends Controller
             $p = AlurLaporan::pemeriksaan($l);
             $l->pemeriksaan_id = $p?->pemeriksaan_id;
             $l->rekomendasi = $p?->rekomendasi;
+            $l->label_rekomendasi = $p?->label_rekomendasi;
             $l->sumber_pengganti = $p?->sumber_pengganti;
         }
         $map = fn ($t) => (object) ['petugas_nama' => $t['petugas']->nama, 'petugas_email' => $t['petugas']->email,
@@ -256,6 +257,33 @@ class PenugasanController extends Controller
 
             $pemeriksaan = AlurLaporan::pemeriksaan($laporan);
 
+            if ($pemeriksaan->rekomendasi === 'penggantian'
+                && ! in_array($pemeriksaan->jenis_penggantian, ['unit', 'sparepart'], true)) {
+                throw ValidationException::withMessages([
+                    'pekerjaan' => 'Jenis penggantian pada rekomendasi belum tercatat. Periksa pembaruan database.',
+                ])->errorBag($namaError);
+            }
+
+            if ($pemeriksaan->rekomendasi === 'penggantian'
+                && $pemeriksaan->jenis_penggantian === 'sparepart') {
+                $dana = AlurLaporan::danaTerakhir($pemeriksaan);
+                if ($pemeriksaan->sumber_pengganti !== 'pengadaan'
+                    || $dana->isEmpty()
+                    || $dana->contains(fn ($d) => $d->status_pengajuan !== 'disetujui')) {
+                    throw ValidationException::withMessages([
+                        'pekerjaan' => 'Penggantian sparepart memerlukan pengajuan dana yang sudah disetujui.',
+                    ])->errorBag($namaError);
+                }
+
+                if (! empty($data['inventaris_pengganti_id'])
+                    || ! empty($data['kondisi_barang_lama'])
+                    || ! empty($data['gudang_barang_lama_id'])) {
+                    throw ValidationException::withMessages([
+                        'pekerjaan' => 'Penggantian sparepart tetap memakai unit dan lokasi yang sama. Muat ulang formulir.',
+                    ])->errorBag($namaError);
+                }
+            }
+
             $penggantiId = null;
 
             if ($data['status_tindakan'] === 'selesai') {
@@ -268,7 +296,8 @@ class PenugasanController extends Controller
                     ])->errorBag($namaError);
                 }
 
-                if ($pemeriksaan->rekomendasi === 'penggantian') {
+                if ($pemeriksaan->rekomendasi === 'penggantian'
+                    && $pemeriksaan->jenis_penggantian === 'unit') {
                     if (empty($data['kondisi_barang_lama'])) {
                         throw ValidationException::withMessages([
                             'kondisi_barang_lama' =>
@@ -321,7 +350,7 @@ class PenugasanController extends Controller
                     }
 
                     $adaLaporanAktif = $barangPengganti->laporan()
-                        ->where('status_laporan', '!=', 'selesai')
+                        ->whereNotIn('status_laporan', ['selesai', 'dihentikan'])
                         ->exists();
 
                     if (

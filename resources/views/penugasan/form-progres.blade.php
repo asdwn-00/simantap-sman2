@@ -37,8 +37,8 @@
             ? old('hasil')
             : $pl->hasil;
 
-        $jenisRekomendasi =
-            \App\Services\AlurLaporan::pemeriksaan($laporan)?->rekomendasi;
+        $rencanaPemeriksaan = \App\Services\AlurLaporan::pemeriksaan($laporan);
+        $jenisRekomendasi = $rencanaPemeriksaan?->rekomendasi;
     @endphp
 
     <form
@@ -72,7 +72,14 @@
             </option>
         </select>
 
-        @if ($jenisRekomendasi === 'penggantian')
+        @if ($jenisRekomendasi === 'penggantian' && $rencanaPemeriksaan->jenis_penggantian === 'sparepart')
+            <p class="progres-petunjuk">
+                Jenis penggantian: Sparepart. Unit inventaris dan lokasinya tetap sama.
+                Tulis pekerjaan yang dilakukan pada Catatan Pengerjaan dan hasil pengecekan pada Hasil Pekerjaan.
+            </p>
+        @endif
+
+        @if ($jenisRekomendasi === 'penggantian' && $rencanaPemeriksaan->jenis_penggantian === 'unit')
             @php
                 $penggantiIsian = $errorProgres->any()
                     ? old('inventaris_pengganti_id')

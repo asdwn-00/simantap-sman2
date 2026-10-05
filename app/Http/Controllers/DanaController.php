@@ -27,7 +27,7 @@ class DanaController extends Controller
         foreach (['diajukan', 'disetujui', 'revisi'] as $status) {
             $ringkasan[$status] = (clone $q)->where('status_pengajuan', $status)->whereDoesntHave('pengajuanBerikutnya')->count();
         }
-        if (in_array($request->query('status'), ['diajukan','disetujui','revisi','ditolak'])) {
+        if (in_array($request->query('status'), ['diajukan','disetujui','revisi'])) {
             $q->where('status_pengajuan', $request->query('status'));
         }
         $dana = $q->latest('pengajuan_id')->paginate(12)->withQueryString();
@@ -159,11 +159,11 @@ class DanaController extends Controller
     $data = $request->validateWithBag($namaError, [
         'keputusan' => [
             'required',
-            'in:disetujui,revisi,ditolak',
+            'in:disetujui,revisi',
         ],
         'catatan' => [
             'nullable',
-            'required_if:keputusan,revisi,ditolak',
+            'required_if:keputusan,revisi',
             'string',
             'max:1000',
         ],
@@ -171,7 +171,7 @@ class DanaController extends Controller
         'keputusan.required' => 'Pilih keputusan terlebih dahulu.',
         'keputusan.in' => 'Pilihan keputusan tidak sesuai.',
         'catatan.required_if' =>
-            'Catatan wajib diisi untuk meminta revisi atau menolak pengajuan.',
+            'Catatan wajib diisi untuk meminta revisi pengajuan.',
         'catatan.max' => 'Catatan maksimal 1.000 karakter.',
     ]);
 
@@ -216,7 +216,6 @@ class DanaController extends Controller
     $pesan = [
         'disetujui' => 'Pengajuan dana disetujui.',
         'revisi' => 'Permintaan revisi pengajuan dana telah disimpan.',
-        'ditolak' => 'Pengajuan dana ditolak.',
     ];
 
     return redirect()

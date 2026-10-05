@@ -2,7 +2,7 @@
 
 return [
     'role' => ['pj_lab' => 'PJ Lab', 'petugas' => 'Petugas Sarpras', 'koordinator' => 'Koordinator Sarpras'],
-    'status' => ['masuk' => 0, 'diperiksa' => 25, 'disetujui' => 50, 'ditangani' => 75, 'selesai' => 100],
+    'status' => ['masuk' => 0, 'diperiksa' => 25, 'disetujui' => 50, 'ditangani' => 75, 'selesai' => 100, 'dihentikan' => null],
     'ruangan' => ['lab_biologi' => 'Laboratorium Biologi', 'lab_kimia' => 'Laboratorium Kimia', 'lab_fisika' => 'Laboratorium Fisika', 'kelas' => 'Kelas', 'gudang' => 'Gudang', 'lainnya' => 'Lainnya'],
     'warna_laporan' => [
         'masuk' => 'simantap-status-masuk',
@@ -10,6 +10,7 @@ return [
         'disetujui' => 'simantap-status-disetujui',
         'ditangani' => 'simantap-status-ditangani',
         'selesai' => 'simantap-status-selesai',
+        'dihentikan' => 'simantap-status-dihentikan',
     ],
     'warna_tugas' => [
         'ditugaskan' => 'simantap-tugas-ditugaskan',
@@ -17,5 +18,7 @@ return [
         'terkendala' => 'simantap-tugas-terkendala',
         'selesai' => 'simantap-tugas-selesai',
         'dibatalkan' => 'simantap-tugas-dibatalkan',
+        'revisi' => 'simantap-status-diperiksa',
+        'dihentikan' => 'simantap-status-dihentikan',
     ],
 ];

@@ -56,7 +56,7 @@
                             <th class="py-4 px-2">Kode Laporan</th>
                             <th class="py-4 px-2">Barang / Ruangan</th>
                             <th class="py-4 px-2">Tanggal Lapor</th>
-                            <th class="py-4 px-2">Tanggal Selesai</th>
+                            <th class="py-4 px-2">Tanggal Berakhir</th>
                             <th class="py-4 px-2">Status Laporan</th>
                             <th class="py-4 px-2 text-center">Aksi</th>
                         </tr>
@@ -71,8 +71,8 @@
                                     <p class="text-xs text-gray-500">{{ $l->ruangan->nama_ruangan ?? '-' }}</p>
                                 </td>
                                 <td class="py-4 px-2 text-gray-600 font-medium">{{ $l->tanggal_laporan->translatedFormat('d M Y') }}</td>
-                                <td class="py-4 px-2 font-medium {{ $l->tanggal_ditutup ? 'text-green-600 font-bold' : 'text-gray-400' }}">
-                                    {{ $l->tanggal_ditutup?->translatedFormat('d M Y') ?? 'Belum Selesai' }}
+                                <td class="py-4 px-2 font-medium {{ $l->status_laporan === 'dihentikan' ? 'text-red-600 font-bold' : ($l->tanggal_ditutup ? 'text-green-600 font-bold' : 'text-gray-400') }}">
+                                    {{ $l->tanggal_ditutup?->translatedFormat('d M Y') ?? 'Belum berakhir' }}
                                 </td>
                                 <td class="py-4 px-2">
                                     <span class="{{ $b['warna_status'] }} text-xs font-bold px-3 py-1.5 rounded-full">{{ $b['label_status'] }}</span>
@@ -204,37 +204,56 @@
         @endif
 
         @if ($b['bisa_isi_pemeriksaan'])
-            <div id="modalPemeriksaan-{{ $l->laporan_id }}" class="hidden fixed inset-0 z-50 flex items-center justify-center px-4 modal-backdrop">
-                <div class="bg-white w-full max-w-lg rounded-[1.75rem] shadow-xl p-8">
+            <div id="modalPemeriksaan-{{ $l->laporan_id }}" class="hidden fixed inset-0 z-50 flex items-center justify-center px-4 py-6 modal-backdrop overflow-y-auto">
+                <div class="bg-white w-full max-w-lg rounded-[1.75rem] shadow-xl p-8 my-auto">
                     <div class="flex justify-between items-start mb-1">
                         <h3 class="text-xl font-extrabold text-[#2B4885]">Hasil Pemeriksaan & Rekomendasi</h3>
                         <button type="button" onclick="closeModal('modalPemeriksaan-{{ $l->laporan_id }}')" class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
                     </div>
                     <p class="text-xs text-gray-500 mb-6">Isi temuan dan rekomendasi penanganan. Laporan: {{ $l->kode_laporan }}.</p>
 
+                    @php
+                        $isianLama = (int) old('pemeriksaan_id') === (int) $pem->pemeriksaan_id;
+                        $rekomendasiIsian = $isianLama ? old('rekomendasi') : ($pem->rekomendasi ?? 'perbaikan');
+                        $jenisIsian = $isianLama ? old('jenis_penggantian') : $pem->jenis_penggantian;
+                        $sumberIsian = $isianLama ? old('sumber_pengganti') : $pem->sumber_pengganti;
+                        if ($jenisIsian === 'sparepart') $sumberIsian = 'pengadaan';
+                    @endphp
+                    @if ($pem->status_persetujuan === 'revisi')
+                        <p class="text-sm bg-yellow-50 text-yellow-800 rounded-xl p-3 mb-4">Catatan revisi: {{ $pem->catatan_koordinator }}</p>
+                    @endif
                     <form method="POST" action="{{ route('laporan.isi-pemeriksaan', $pem->pemeriksaan_id) }}" class="space-y-4">
+                        <input type="hidden" name="pemeriksaan_id" value="{{ $pem->pemeriksaan_id }}">
                         @csrf
                         <div>
                             <label class="text-xs font-bold text-gray-500 uppercase tracking-wide">Temuan Pemeriksaan Fisik</label>
-                            <textarea name="temuan" rows="3" required placeholder="Contoh: Pipa pembuangan retak..." class="mt-1.5 w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#2B4885]"></textarea>
+                            <textarea name="temuan" rows="3" required placeholder="Contoh: Pipa pembuangan retak..." class="mt-1.5 w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#2B4885]">{{ $isianLama ? old('temuan') : $pem->temuan }}</textarea>
                         </div>
                         <div>
                             <label class="text-xs font-bold text-gray-500 uppercase tracking-wide">Rekomendasi Tindakan</label>
                             <div class="mt-2 flex gap-3">
                                 <label class="flex-1 flex items-center gap-2 border border-gray-200 rounded-xl px-4 py-2.5 text-sm cursor-pointer has-[:checked]:border-[#2B4885] has-[:checked]:bg-blue-50">
-                                    <input type="radio" name="rekomendasi" value="perbaikan" checked onchange="toggleSumberPengganti('{{ $l->laporan_id }}', false)" class="accent-[#2B4885]"> Perbaikan
+                                    <input type="radio" name="rekomendasi" value="perbaikan" @checked($rekomendasiIsian === 'perbaikan') onchange="toggleSumberPengganti('{{ $l->laporan_id }}', false)" class="accent-[#2B4885]"> Perbaikan / servis
                                 </label>
                                 <label class="flex-1 flex items-center gap-2 border border-gray-200 rounded-xl px-4 py-2.5 text-sm cursor-pointer has-[:checked]:border-[#2B4885] has-[:checked]:bg-blue-50">
-                                    <input type="radio" name="rekomendasi" value="penggantian" onchange="toggleSumberPengganti('{{ $l->laporan_id }}', true)" class="accent-[#2B4885]"> Penggantian
+                                    <input type="radio" name="rekomendasi" value="penggantian" @checked($rekomendasiIsian === 'penggantian') onchange="toggleSumberPengganti('{{ $l->laporan_id }}', true)" class="accent-[#2B4885]"> Penggantian
                                 </label>
                             </div>
                         </div>
-                        <div id="sumberPenggantiField-{{ $l->laporan_id }}" class="hidden">
-                            <label class="text-xs font-bold text-gray-500 uppercase tracking-wide">Sumber Pengganti</label>
-                            <select name="sumber_pengganti" class="mt-1.5 w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#2B4885]">
-                                <option value="stok_gudang">Ambil Stok Gudang</option>
-                                <option value="pengadaan">Butuh Pengajuan Dana (Pengadaan)</option>
+                        <div id="sumberPenggantiField-{{ $l->laporan_id }}" class="{{ $rekomendasiIsian === 'penggantian' ? '' : 'hidden' }}">
+                            <label class="text-xs font-bold text-gray-500 uppercase tracking-wide">Jenis Penggantian</label>
+                            <select name="jenis_penggantian" onchange="sesuaikanJenisPenggantian('{{ $l->laporan_id }}')" @disabled($rekomendasiIsian !== 'penggantian') @required($rekomendasiIsian === 'penggantian') class="mt-1.5 w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#2B4885]">
+                                <option value="">Pilih jenis penggantian</option>
+                                <option value="unit" @selected($jenisIsian === 'unit')>Unit utuh</option>
+                                <option value="sparepart" @selected($jenisIsian === 'sparepart')>Sparepart</option>
                             </select>
+                            <label class="block mt-3 text-xs font-bold text-gray-500 uppercase tracking-wide">Sumber Pengganti</label>
+                            <select name="sumber_pengganti" @disabled($rekomendasiIsian !== 'penggantian') @required($rekomendasiIsian === 'penggantian') class="mt-1.5 w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#2B4885]">
+                                <option value="stok_gudang" @disabled($jenisIsian === 'sparepart') @selected($sumberIsian === 'stok_gudang')>Ambil Stok Gudang</option>
+                                <option value="pengadaan" @selected($sumberIsian === 'pengadaan')>Butuh Pengajuan Dana (Pengadaan)</option>
+                            </select>
+                            <label class="block mt-3 text-xs font-bold text-gray-500 uppercase tracking-wide">Alasan Penggantian</label>
+                            <textarea name="alasan_penggantian" rows="3" maxlength="2000" @disabled($rekomendasiIsian !== 'penggantian') @required($rekomendasiIsian === 'penggantian') placeholder="Jelaskan kerusakan dan mengapa unit atau sparepart perlu diganti." class="mt-1.5 w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm">{{ $isianLama ? old('alasan_penggantian') : $pem->alasan_penggantian }}</textarea>
                         </div>
                         <div class="flex justify-end gap-3 pt-4">
                             <button type="button" onclick="closeModal('modalPemeriksaan-{{ $l->laporan_id }}')" class="bg-white border border-gray-200 hover:border-[#2B4885] text-[#2B4885] text-sm font-bold py-2.5 px-4 rounded-xl">Batal</button>
@@ -285,6 +304,8 @@
 
         <div id="modalDetail-{{ $l->laporan_id }}" class="hidden fixed inset-0 z-50 flex items-center justify-center px-4 py-6 modal-backdrop overflow-y-auto">
             <div class="bg-white w-full max-w-2xl rounded-[1.75rem] shadow-xl p-8 my-auto relative">
+                @include('partials.penghentian-laporan', ['laporan' => $l])
+
                 <div class="flex justify-between items-start mb-6 border-b border-gray-100 pb-4">
                     <div>
                         <h3 class="text-xl font-extrabold text-[#2B4885]">Detail Riwayat Laporan ({{ $l->kode_laporan }})</h3>
@@ -318,22 +339,25 @@
                                         {{ $pem->temuan ?: 'Belum diisi.' }}
                                         @if ($pem->tanggal_pemeriksaan) (Diperiksa: {{ $pem->tanggal_pemeriksaan->translatedFormat('d M Y') }}) @endif
                                     </p>
+                                @if ($pem->alasan_penggantian)
+                                    <p class="text-sm mt-2">Alasan penggantian: {{ $pem->alasan_penggantian }}</p>
+                                @endif
                                 </div>
                                 <div class="grid grid-cols-2 gap-4">
                                     <div>
                                         <p class="text-[10px] font-bold text-gray-500 uppercase">Rekomendasi</p>
                                         <p class="text-sm font-semibold text-gray-800 mt-0.5">
-                                            {{ $pem->rekomendasi ? ucfirst($pem->rekomendasi) : '-' }}
+                                            {{ $pem->label_rekomendasi }}
                                             @if ($pem->sumber_pengganti) &middot; {{ $pem->sumber_pengganti === 'stok_gudang' ? 'Ambil Stok Gudang' : 'Pengadaan' }} @endif
                                         </p>
                                     </div>
                                     <div>
                                         <p class="text-[10px] font-bold text-gray-500 uppercase">Keputusan Koordinator</p>
-                                        <p class="text-sm font-bold mt-0.5 {{ $pem->status_persetujuan === 'disetujui' ? 'text-green-600' : ($pem->status_persetujuan === 'ditolak' ? 'text-red-600' : 'text-gray-500') }}">
+                                        <p class="text-sm font-bold mt-0.5 {{ $pem->status_persetujuan === 'disetujui' ? 'text-green-600' : ($pem->status_persetujuan === 'dihentikan' ? 'text-red-600' : 'text-gray-500') }}">
                                             @switch($pem->status_persetujuan)
                                                 @case('disetujui') Disetujui @if ($l->prioritas) &middot; Prioritas: {{ ucfirst($l->prioritas) }} @endif @break
                                                 @case('revisi') Diminta Revisi @break
-                                                @case('ditolak') Ditolak @break
+                                                @case('dihentikan') Dihentikan @break
                                                 @case('menunggu') Menunggu Tinjauan @break
                                                 @default Belum Diajukan
                                             @endswitch
@@ -372,7 +396,7 @@
                                     </p>
                                 </div>
                                 <div>
-                                    <p class="text-[10px] font-bold text-gray-500 uppercase">Tanggal Selesai (Ditutup)</p>
+                                    <p class="text-[10px] font-bold text-gray-500 uppercase">Tanggal Laporan Berakhir</p>
                                     <p class="text-sm font-bold text-gray-800 mt-0.5">{{ $l->tanggal_ditutup?->translatedFormat('d M Y') ?? 'Belum ditutup koordinator' }}</p>
                                 </div>
                             </div>
@@ -391,7 +415,21 @@
         function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
         function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
         function toggleSumberPengganti(laporanId, show) {
-            document.getElementById('sumberPenggantiField-' + laporanId).classList.toggle('hidden', !show);
+            const field = document.getElementById('sumberPenggantiField-' + laporanId);
+            field.classList.toggle('hidden', !show);
+            field.querySelectorAll('select, textarea').forEach(input => {
+                input.required = show;
+                input.disabled = !show;
+            });
+            sesuaikanJenisPenggantian(laporanId);
+        }
+
+        function sesuaikanJenisPenggantian(laporanId) {
+            const field = document.getElementById('sumberPenggantiField-' + laporanId);
+            const jenis = field.querySelector('[name=jenis_penggantian]').value;
+            const sumber = field.querySelector('[name=sumber_pengganti]');
+            sumber.querySelector('[value=stok_gudang]').disabled = jenis === 'sparepart';
+            if (jenis === 'sparepart') sumber.value = 'pengadaan';
         }
 
         const dataRuangan = @json($pengguna->ruanganTanggungJawab->mapWithKeys(fn ($r) => [
@@ -420,6 +458,14 @@
 
 <script>
         const requestedModal = @json(request('buka'));
+        const previousInspection = @json(old('pemeriksaan_id'));
+        if (previousInspection) {
+            document.querySelectorAll('input[name="pemeriksaan_id"]').forEach(input => {
+                if (input.value === String(previousInspection)) {
+                    input.closest('.modal-backdrop').classList.remove('hidden');
+                }
+            });
+        }
         if (typeof requestedModal === 'string' && /^(modalLaporan|modal(?:Pemeriksaan|Tinjau|Konfirmasi|Tutup)-[0-9]+)$/.test(requestedModal)) {
             const modal = document.getElementById(requestedModal);
             if (modal) modal.classList.remove('hidden');

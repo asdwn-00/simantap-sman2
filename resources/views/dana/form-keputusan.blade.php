@@ -44,12 +44,12 @@
                 name="catatan"
                 rows="3"
                 maxlength="1000"
-                placeholder="Jelaskan hal yang perlu direvisi atau alasan penolakan."
+                placeholder="Jelaskan rincian kebutuhan atau nominal yang perlu direvisi."
                 class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm"
             >{{ $catatanSebelumnya }}</textarea>
 
             <p class="text-xs text-gray-500 mt-2">
-                Catatan wajib untuk Minta Revisi dan Tolak.
+                Catatan wajib untuk Minta Revisi.
                 Untuk Setujui, catatan boleh dikosongkan.
             </p>
 
@@ -70,15 +70,6 @@
                     class="bg-blue-100 hover:bg-blue-200 text-blue-700 font-bold py-2.5 px-4 rounded-xl text-sm"
                 >
                     Minta Revisi
-                </button>
-
-                <button
-                    type="submit"
-                    name="keputusan"
-                    value="ditolak"
-                    class="bg-red-100 hover:bg-red-200 text-red-700 font-bold py-2.5 px-4 rounded-xl text-sm"
-                >
-                    Tolak
                 </button>
             </div>
         </form>

@@ -56,7 +56,7 @@
                             <th class="py-4 px-2">Kode Laporan</th>
                             <th class="py-4 px-2">Barang / Ruangan</th>
                             <th class="py-4 px-2">Tanggal Lapor</th>
-                            <th class="py-4 px-2">Tanggal Selesai</th>
+                            <th class="py-4 px-2">Tanggal Berakhir</th>
                             <th class="py-4 px-2">Prioritas</th>
                             <th class="py-4 px-2">Status Laporan</th>
                             <th class="py-4 px-2">Perkembangan Laporan</th>
@@ -76,7 +76,7 @@
                                     <p class="text-xs text-gray-500">{{ $l->ruangan->nama_ruangan ?? '-' }}</p>
                                 </td>
                                 <td class="py-4 px-2 text-gray-600 font-medium">{{ $l->tanggal_laporan->translatedFormat('d M Y') }}</td>
-                                <td class="py-4 px-2 font-medium {{ $l->tanggal_ditutup ? 'text-green-600 font-bold' : 'text-gray-400' }}">
+                                <td class="py-4 px-2 font-medium {{ $l->status_laporan === 'dihentikan' ? 'text-red-600 font-bold' : ($l->tanggal_ditutup ? 'text-green-600 font-bold' : 'text-gray-400') }}">
                                     {{ $l->tanggal_ditutup?->translatedFormat('d M Y') ?? 'Belum ditutup' }}
                                 </td>
                                 <td class="py-4 px-2">
@@ -262,6 +262,8 @@
 
         <div id="modalDetail-{{ $l->laporan_id }}" class="hidden fixed inset-0 z-50 flex items-center justify-center px-4 py-6 modal-backdrop overflow-y-auto">
             <div class="bg-white w-full max-w-2xl rounded-[1.75rem] shadow-xl p-8 my-auto relative">
+                @include('partials.penghentian-laporan', ['laporan' => $l])
+
                 <div class="flex justify-between items-start mb-6 border-b border-gray-100 pb-4">
                     <div>
                         <h3 class="text-xl font-extrabold text-[#2B4885]">Detail Riwayat Laporan ({{ $l->kode_laporan }})</h3>
@@ -295,12 +297,15 @@
                                         {{ $pem->temuan ?: 'Belum diisi.' }}
                                         @if ($pem->tanggal_pemeriksaan) (Diperiksa: {{ $pem->tanggal_pemeriksaan->translatedFormat('d M Y') }}) @endif
                                     </p>
+                                @if ($pem->alasan_penggantian)
+                                    <p class="text-sm mt-2">Alasan penggantian: {{ $pem->alasan_penggantian }}</p>
+                                @endif
                                 </div>
                                 <div class="grid grid-cols-2 gap-4">
                                     <div>
                                         <p class="text-[10px] font-bold text-gray-500 uppercase">Rekomendasi</p>
                                         <p class="text-sm font-semibold text-gray-800 mt-0.5">
-                                            {{ $pem->rekomendasi ? ucfirst($pem->rekomendasi) : '-' }}
+                                            {{ $pem->label_rekomendasi }}
                                             @if ($pem->sumber_pengganti) &middot; {{ $pem->sumber_pengganti === 'stok_gudang' ? 'Ambil Stok Gudang' : 'Pengadaan' }} @endif
                                         </p>
                                     </div>
@@ -310,7 +315,7 @@
                                             @switch($pem->status_persetujuan)
                                                 @case('disetujui') Disetujui @if ($l->prioritas) &middot; Prioritas: {{ ucfirst($l->prioritas) }} @endif @break
                                                 @case('revisi') Diminta Revisi @break
-                                                @case('ditolak') Ditolak @break
+                                                @case('dihentikan') Dihentikan @break
                                                 @case('menunggu') Menunggu Tinjauan @break
                                                 @default Belum Diajukan
                                             @endswitch
