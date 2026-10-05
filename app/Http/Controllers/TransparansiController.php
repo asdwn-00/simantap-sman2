@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Models\Pemeriksaan;
 use App\Models\LaporanKerusakan;
 use App\Services\AlurLaporan;
 
@@ -51,7 +52,7 @@ class TransparansiController extends Controller
         [$label, $warna] = self::BADGE[$l->status_laporan] ?? ['-', 'slate'];
         [$doneNodes, $persenSelesai] = $this->hitungProgres($l->status_laporan);
 
-        $pemeriksaan = DB::table('pemeriksaan')
+        $pemeriksaan = Pemeriksaan::query()
             ->where('laporan_id', $laporan)
             ->orderByDesc('pemeriksaan_id')
             ->get();
