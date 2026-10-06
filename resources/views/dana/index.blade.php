@@ -148,7 +148,7 @@
             </div>
         </div>
         <div class="mt-6">{{ $dana->links() }}</div>
-        @unless ($akun->isPjLab())<p class="text-xs text-gray-500 mt-4">Pembuatan dan keputusan pengajuan dana sudah tersedia. Form pengiriman versi revisi oleh petugas masih dalam pengembangan.</p>@endunless
+        @unless ($akun->isPjLab())@endunless
     </main>
 
 
