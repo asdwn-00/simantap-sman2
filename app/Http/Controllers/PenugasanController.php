@@ -260,7 +260,9 @@ class PenugasanController extends Controller
             if ($pemeriksaan->rekomendasi === 'penggantian'
                 && ! in_array($pemeriksaan->jenis_penggantian, ['unit', 'sparepart'], true)) {
                 throw ValidationException::withMessages([
-                    'pekerjaan' => 'Jenis penggantian pada rekomendasi belum tercatat. Periksa pembaruan database.',
+                    'pekerjaan' => 'Jenis penggantian belum tercatat. Hubungi koordinator untuk memeriksa rekomendasi.
+
+Penyebab teknisnya tetap dapat dicatat pada log jika diperlukan.',
                 ])->errorBag($namaError);
             }
 
