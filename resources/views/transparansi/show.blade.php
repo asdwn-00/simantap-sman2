@@ -81,9 +81,9 @@
 
         @php
             $warnaBadge = config('simantap.warna_laporan');
-            $warnaDot = ['tinggi' => 'bg-red-500', 'sedang' => 'bg-[#F5C518]', 'rendah' => 'bg-blue-400'];
-            $warnaTeks = ['tinggi' => 'text-red-600 bg-red-50', 'sedang' => 'text-amber-600 bg-amber-50', 'rendah' => 'text-blue-600 bg-blue-50'];
-            $labelPrioritas = ['tinggi' => 'Prioritas Tinggi', 'sedang' => 'Prioritas Menengah', 'rendah' => 'Prioritas Rendah'];
+            $warnaDot = ['tinggi' => 'bg-red-500', 'rendah' => 'bg-blue-400'];
+            $warnaTeks = ['tinggi' => 'text-red-600 bg-red-50', 'rendah' => 'text-blue-600 bg-blue-50'];
+            $labelPrioritas = ['tinggi' => 'Prioritas Tinggi', 'rendah' => 'Prioritas Rendah'];
             $tahapan = [
                 ['Masuk', 1], ['Diperiksa', 2], ['Disetujui', 3], ['Ditangani', 4], ['Selesai', 5],
             ];

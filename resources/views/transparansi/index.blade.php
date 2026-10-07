@@ -73,8 +73,8 @@
 
         @php
             $warnaBadge = config('simantap.warna_laporan');
-            $warnaDot = ['tinggi' => 'bg-red-500', 'sedang' => 'bg-[#F5C518]', 'rendah' => 'bg-blue-400'];
-            $labelPrioritas = ['tinggi' => 'Prioritas Tinggi', 'sedang' => 'Prioritas Menengah', 'rendah' => 'Prioritas Rendah'];
+            $warnaDot = ['tinggi' => 'bg-red-500', 'rendah' => 'bg-blue-400'];
+            $labelPrioritas = ['tinggi' => 'Prioritas Tinggi', 'rendah' => 'Prioritas Rendah'];
         @endphp
 
         @if ($laporan->isEmpty())
