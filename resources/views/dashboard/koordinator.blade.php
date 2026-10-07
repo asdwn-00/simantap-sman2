@@ -29,7 +29,7 @@
                             <h2 class="text-3xl font-extrabold text-white mb-2">{{ $sapaan }}, {{ $pengguna->nama }}!</h2>
                             <p class="text-blue-100 text-sm max-w-md leading-relaxed">
                                 @if ($belumAdaPemeriksa === 0 && $rekomendasiMenungguTinjauan->isEmpty() && $danaMenunggu->isEmpty())
-                                    Tidak ada laporan, rekomendasi, atau pengajuan dana yang menunggu keputusanmu saat ini.
+                                    Tidak ada laporan, rekomendasi, atau pengajuan dana yang menunggu keputusan Anda saat ini.
                                 @else
                                     Ada {{ $belumAdaPemeriksa }} laporan yang butuh penugasan,
                                     {{ $rekomendasiMenungguTinjauan->count() }} rekomendasi menunggu tinjauan Anda,
@@ -98,7 +98,7 @@
                                 </div>
                             </div>
                         @empty
-                            <p class="text-sm text-gray-400 text-center py-4">Belum ada akun dengan role Petugas Sarpras.</p>
+                            <p class="text-sm text-gray-400 text-center py-4">Belum ada akun petugas.</p>
                         @endforelse
                     </div>
                 </div>

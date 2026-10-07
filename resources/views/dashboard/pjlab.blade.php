@@ -40,7 +40,7 @@
                             <h2 class="text-3xl font-extrabold text-white mb-2">{{ $sapaan }}, {{ $pengguna->nama }}!</h2>
                             <p class="text-blue-100 text-sm max-w-md leading-relaxed">
                                 @if ($perluDikonfirmasi->count() > 0)
-                                    Ada {{ $perluDikonfirmasi->count() }} hasil pekerjaan yang menunggu konfirmasi Anda hari ini.
+                                    Ada {{ $perluDikonfirmasi->count() }} hasil pekerjaan yang menunggu konfirmasi Anda saat ini.
                                 @else
                                     Tidak ada konfirmasi yang menunggu tindakan Anda saat ini.
                                 @endif
@@ -155,7 +155,7 @@
                                 <span class="font-bold text-emerald-600">{{ $lab->baik }} Unit</span>
                             </div>
                             <div class="flex justify-between">
-                                <span class="text-gray-400">Dalam Perbaikan:</span>
+                                <span class="text-gray-400">Memiliki Laporan Aktif:</span>
                                 <span class="font-bold text-amber-600">{{ $lab->dalamPerbaikan }} Unit</span>
                             </div>
                         </div>

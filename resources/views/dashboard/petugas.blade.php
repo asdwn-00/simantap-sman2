@@ -34,7 +34,7 @@
                                 @if ($tugasAktif === 0 && $danaSaya->isEmpty())
                                     Tidak ada tugas aktif atau pengajuan dana yang perlu dipantau saat ini.
                                 @else
-                                    Anda memiliki {{ $tugasAktif }} tugas aktif dan {{ $danaSaya->count() }} pengajuan dana yang perlu dipantau statusnya hari ini.
+                                    Anda memiliki {{ $tugasAktif }} tugas aktif dan {{ $danaSaya->count() }} pengajuan dana yang perlu dipantau statusnya saat ini.
                                 @endif
                             </p>
                         </div>
@@ -48,12 +48,12 @@
                     <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 text-center flex flex-col items-center justify-center">
                         <div class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-blue-500 mb-3 font-bold text-lg">{{ $tugasAktif }}</div>
                         <h3 class="text-xl font-bold text-[#2B4885]">Tugas Aktif</h3>
-                        <p class="text-[11px] text-gray-400 mt-1">Dalam Pengerjaan</p>
+                        <p class="text-[11px] text-gray-400 mt-1">Belum Selesai</p>
                     </div>
                     <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 text-center flex flex-col items-center justify-center">
                         <div class="w-12 h-12 bg-yellow-50 rounded-xl flex items-center justify-center text-yellow-500 mb-3 font-bold text-lg">{{ $danaDiajukan }}</div>
                         <h3 class="text-xl font-bold text-[#2B4885]">Dana Diajukan</h3>
-                        <p class="text-[11px] text-gray-400 mt-1">Menunggu Acc</p>
+                        <p class="text-[11px] text-gray-400 mt-1">Menunggu Persetujuan</p>
                     </div>
                     <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 text-center flex flex-col items-center justify-center">
                         <div class="w-12 h-12 bg-red-50 rounded-xl flex items-center justify-center text-red-500 mb-3 font-bold text-lg">{{ $danaRevisi }}</div>
