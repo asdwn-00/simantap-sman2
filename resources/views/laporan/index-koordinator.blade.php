@@ -169,7 +169,7 @@
                         </div>
                         <div>
                             <label class="text-xs font-bold text-gray-500 uppercase tracking-wide">Catatan Koordinator <span id="catatanWajibTag-{{ $lap->laporan_id }}" class="hidden text-red-500 normal-case">(wajib diisi)</span></label>
-                            <textarea name="catatan_koordinator" rows="3" placeholder="Wajib diisi jika Jelaskan perbaikan rekomendasi atau alasan penghentian laporan..." class="mt-1.5 w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#2B4885]"></textarea>
+                            <textarea name="catatan_koordinator" rows="3" placeholder="Jelaskan revisi yang diperlukan atau alasan penghentian laporan." class="mt-1.5 w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#2B4885]"></textarea>
                         </div>
                         <div>
                             <label class="text-xs font-bold text-gray-500 uppercase tracking-wide">Prioritas Laporan</label>
@@ -186,7 +186,7 @@
                             @endif
                         </div>
                         <div class="bg-blue-50 text-[#2B4885] text-[11px] p-3 rounded-xl border border-blue-100">
-                            Jika disetujui, status laporan menjadi Disetujui. Penugasan pelaksana dapat dilakukan setelah syarat prioritas dan dana terpenuhi. Revisi dikembalikan kepada petugas pemeriksa yang sama. Hentikan Laporan mengakhiri proses tanpa penanganan dan wajib disertai alasan.
+                            Jika disetujui, status laporan menjadi Disetujui. Penugasan pelaksana dapat dilakukan setelah syarat prioritas dan dana terpenuhi. Revisi dikembalikan kepada petugas pemeriksa yang sama. Hentikan Laporan mengakhiri proses dan wajib disertai alasan.
                         </div>
                         <div class="flex justify-end gap-3 pt-2">
                             <button type="button" onclick="closeModal('modalTinjau-{{ $lap->laporan_id }}')" class="text-gray-500 hover:text-gray-700 text-sm font-bold py-2.5 px-4 rounded-xl">Batal</button>
@@ -286,9 +286,6 @@
                                     @if ($pem->alasan_penggantian)
                                         <p class="text-sm mt-2">Alasan penggantian: {{ $pem->alasan_penggantian }}</p>
                                     @endif
-                                @if ($pem->alasan_penggantian)
-                                    <p class="text-sm mt-2">Alasan penggantian: {{ $pem->alasan_penggantian }}</p>
-                                @endif
                                 </div>
                                 <div class="grid grid-cols-2 gap-4">
                                     <div>

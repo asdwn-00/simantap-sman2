@@ -65,7 +65,7 @@
                     </thead>
                     <tbody class="text-sm divide-y divide-gray-50">
                         @php
-                            $warnaPrioritas = ['tinggi' => 'bg-red-50 text-red-600', 'sedang' => 'bg-yellow-50 text-yellow-700', 'rendah' => 'bg-teal-50 text-teal-700'];
+                            $warnaPrioritas = ['tinggi' => 'bg-red-50 text-red-600', 'rendah' => 'bg-teal-50 text-teal-700'];
                         @endphp
                         @forelse ($baris as $b)
                             @php $l = $b['laporan']; @endphp
