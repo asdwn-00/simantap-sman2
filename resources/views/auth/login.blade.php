@@ -44,7 +44,7 @@
 
         <div class="w-full md:w-1/2">
             <h3 class="text-2xl font-bold text-white mb-1.5 drop-shadow-md">Selamat Datang.</h3>
-            <p class="text-white font-medium text-sm mb-6 drop-shadow-md">Silakan masukkan kredensial akun Anda.</p>
+            <p class="text-white font-medium text-sm mb-6 drop-shadow-md">Masukkan email dan kata sandi Anda.</p>
 
             @if ($errors->any())
                 <div class="mb-5 bg-red-500/20 border border-red-300/50 text-white text-sm font-semibold rounded-xl px-4 py-3 backdrop-blur-sm">
@@ -62,7 +62,7 @@
                 @csrf
 
                 <div>
-                    <label for="email" class="block text-sm font-semibold text-white mb-2 drop-shadow-md">Username / Email</label>
+                    <label for="email" class="block text-sm font-semibold text-white mb-2 drop-shadow-md">Email</label>
                     <div class="relative">
                         <input type="text" id="email" name="email" value="{{ old('email') }}" autofocus
                             class="w-full bg-black/30 border border-white/40 rounded-xl px-4 py-3.5 text-sm text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-[#F5C518] focus:border-transparent transition-all shadow-inner backdrop-blur-sm"
