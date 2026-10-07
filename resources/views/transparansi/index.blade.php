@@ -59,7 +59,7 @@
                 Transparansi <span class="text-[#F5C518]">Penanganan Fasilitas</span>
             </h2>
             <p class="text-lg text-white/95 font-medium max-w-2xl mx-auto drop-shadow-sm">
-                Pantau perkembangan laporan perbaikan sarana dan prasarana di lingkungan sekolah secara real-time.
+                Pantau perkembangan penanganan kerusakan sarana dan prasarana di lingkungan sekolah.
             </p>
         </div>
     </header>
