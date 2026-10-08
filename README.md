@@ -88,18 +88,6 @@ php artisan migrate --seed
 
 Migration membuat tabel aplikasi. Identitas barang memakai `inventaris_id` yang diberikan otomatis oleh database. Seeder mengisi data awal, termasuk akun pengguna, ruangan, barang, dan contoh laporan. Tidak perlu mengimpor file SQL secara terpisah.
 
-Langkah pengisian data ini cukup dilakukan sekali. Jika database sudah berisi data atau berasal dari impor cadangan, jangan jalankan seed ulang. Hindari `migrate:fresh` pada database yang masih dipakai karena seluruh tabel dan datanya akan dihapus.
-
-Jika memakai database dari versi sebelumnya yang masih mempunyai kolom `kode_inventaris`, cadangkan database terlebih dahulu, lalu jalankan penyesuaian ini sekali:
-
-```powershell
-php artisan migrate --path=database/migrations/hapus_kode_inventaris.php
-```
-
-Penyesuaian ini menghapus kolom kode dan tabel pencatat kode lama. ID barang, data barang, laporan, dan hubungan antartabel tetap dipertahankan. Nilai kode lama tidak bisa dipulihkan lewat rollback; gunakan cadangan jika diperlukan. Tidak perlu menjalankan seed ulang atau `migrate:fresh`. Untuk instalasi baru dengan langkah di atas, penyesuaian ini sudah ikut dijalankan.
-
-Untuk database versi lama, pembaruan alur rekomendasi dan dana juga memerlukan migrasi `revisi_alur_rekomendasi_dana.php`. Migrasi ini menambahkan alasan penggantian/penghentian dan menyesuaikan status lama tanpa menghapus laporan. Cadangkan database terlebih dahulu; langkah lengkap dan penanganan konflik dijelaskan di [Panduan alur rekomendasi dan dana](PANDUAN-ALUR-REKOMENDASI-DANA.md). Pada instalasi baru, migrasi tersebut sudah ikut dijalankan.
-
 **5. Jalankan aplikasi**
 
 ```powershell
@@ -108,7 +96,7 @@ php artisan serve
 
 Buka [http://127.0.0.1:8000](http://127.0.0.1:8000) di browser dan biarkan terminal tetap berjalan. Halaman pertama menampilkan Transparansi. Gunakan tombol Login untuk masuk sesuai peran pengguna.
 
-Halaman saat ini menggunakan CSS di folder `public`, Tailwind CDN, dan Google Fonts, sehingga tidak perlu menjalankan `npm run dev` untuk membuka tampilan yang tersedia.
+Halaman saat ini menggunakan CSS di folder `public`, Tailwind CDN, dan Google Fonts
 
 **6. Masuk menggunakan akun awal**
 
