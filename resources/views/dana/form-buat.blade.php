@@ -90,7 +90,6 @@
 
                     <p class="text-xs text-gray-500 mt-2">
                         Barang dan ruangan mengikuti laporan.
-                        Tidak perlu mengetik ID atau membuat laporan baru.
                     </p>
                 </div>
 
